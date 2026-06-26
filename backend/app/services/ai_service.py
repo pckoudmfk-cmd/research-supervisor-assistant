@@ -8,7 +8,7 @@ from openai import AsyncOpenAI
 # Ollama — полностью локально, бесплатно, нужен запущенный ollama
 # Gemini — бесплатный tier Google, ключ на aistudio.google.com
 
-PROVIDER = os.getenv("AI_PROVIDER", "groq").lower()
+PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()
 
 PROVIDER_CONFIGS = {
     "groq": {
