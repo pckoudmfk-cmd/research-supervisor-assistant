@@ -15,37 +15,31 @@ export const LEVEL_LABELS: Record<Level, string> = {
   vuz: 'ВУЗ',
 };
 
-export interface TopicGenerateRequest {
-  subject_area: string;
-  work_type: WorkType;
-  level: Level;
-  keywords?: string;
-  count: number;
-}
+export const DIRECTIONS = [
+  'Информационные технологии',
+  'Экономика и управление',
+  'Педагогическое образование',
+  'Юриспруденция',
+  'Технические науки',
+  'Естественные науки',
+  'Гуманитарные науки',
+  'Медицина и здравоохранение',
+  'Сельское хозяйство',
+  'Архитектура и строительство',
+];
 
-export interface ResearchPlanSection {
+export interface Chapter {
+  number: number;
   title: string;
   description: string;
-  estimated_pages: number;
-}
-
-export interface ResearchPlanResponse {
-  topic: string;
-  work_type: WorkType;
-  level: Level;
-  sections: ResearchPlanSection[];
-  total_pages: number;
 }
 
 export interface LiteratureSource {
   title: string;
-  author: string;
-  year: number;
-  type: 'book' | 'article' | 'online' | 'regulatory';
-  publisher?: string;
+  authors: string[];
+  year?: number;
+  source?: string;
+  doi?: string;
   url?: string;
-}
-
-export interface LiteratureSearchResponse {
-  sources: LiteratureSource[];
+  language: 'ru' | 'en' | 'unknown';
 }

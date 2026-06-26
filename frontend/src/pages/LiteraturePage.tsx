@@ -1,6 +1,6 @@
-import { BookOpen, Globe, FileText, Scale, Wand2, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Wand2, ArrowRight, Copy, Check, Globe, BookOpen, ExternalLink } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { searchLiterature } from '../utils/api';
 import { Card } from '../components/ui/Card';
@@ -9,79 +9,75 @@ import { Select } from '../components/ui/Select';
 import type { LiteratureSource } from '../types';
 import styles from './LiteraturePage.module.css';
 
-const TYPE_ICONS: Record<LiteratureSource['type'], typeof BookOpen> = {
-  book: BookOpen,
-  article: FileText,
-  online: Globe,
-  regulatory: Scale,
-};
-
-const TYPE_LABELS: Record<LiteratureSource['type'], string> = {
-  book: 'Книга',
-  article: 'Статья',
-  online: 'Интернет',
-  regulatory: 'НПА',
-};
-
-function formatGost(s: LiteratureSource): string {
-  if (s.type === 'online') {
-    return `${s.author}. ${s.title} [Электронный ресурс]. — URL: ${s.url || 'https://...'} (дата обращения: ${new Date().toLocaleDateString('ru-RU')}).`;
-  }
-  return `${s.author}. ${s.title} / ${s.author}. — ${s.publisher ? s.publisher + ', ' : ''}${s.year}. — ...с.`;
+function formatGost(s: LiteratureSource, index: number): string {
+  const authors = s.authors.join(', ') || 'Автор не указан';
+  const year = s.year ?? 'б.г.';
+  const source = s.source ? ` // ${s.source}` : '';
+  const doi = s.doi ? `. — DOI: ${s.doi}` : '';
+  return `${index}. ${authors}. ${s.title}${source}. — ${year}${doi}.`;
 }
 
 export function LiteraturePage() {
   const navigate = useNavigate();
-  const { selectedTopic, workType, level, literature, setLiterature, loadingLiterature, setLoadingLiterature } = useAppStore();
+  const { topicFormulation, literature, setLiterature, loadingLiterature, setLoadingLiterature } = useAppStore();
   const [count, setCount] = useState(10);
   const [copied, setCopied] = useState(false);
 
   const handleSearch = async () => {
-    if (!selectedTopic) return;
+    if (!topicFormulation) return;
     setLoadingLiterature(true);
     try {
-      const sources = await searchLiterature(selectedTopic, workType, level, count);
+      const sources = await searchLiterature(topicFormulation, count);
       setLiterature(sources);
     } finally {
       setLoadingLiterature(false);
     }
   };
 
-  const handleCopyAll = () => {
-    const text = literature.map((s, i) => `${i + 1}. ${formatGost(s)}`).join('\n');
+  const handleCopy = () => {
+    const text = literature.map((s, i) => formatGost(s, i + 1)).join('\n');
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!selectedTopic) {
+  if (!topicFormulation) {
     return (
       <div className={styles.empty}>
-        <p>Сначала выберите тему в модуле 1</p>
-        <Button variant="secondary" onClick={() => navigate('/')}>Перейти к модулю 1</Button>
+        <p>Сначала сформулируйте тему на шаге 2</p>
+        <Button variant="secondary" onClick={() => navigate('/topic')}>К формулировке темы</Button>
       </div>
     );
   }
 
-  const countOptions = [5, 10, 15, 20].map((n) => ({ value: String(n), label: String(n) }));
+  const countOptions = [5, 10, 15, 20].map((n) => ({ value: String(n), label: `${n} источников` }));
+  const ruCount = literature.filter((s) => s.language === 'ru').length;
+  const enCount = literature.filter((s) => s.language === 'en').length;
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Модуль 4 — Поиск литературы</h1>
-        <p className={styles.pageDesc}>AI подберёт источники по теме в соответствии со стандартами ГОСТ</p>
+        <h1 className={styles.title}>Поиск литературы</h1>
+        <p className={styles.desc}>
+          Реальный поиск по базам Semantic Scholar и OpenAlex.
+          Более 200 миллионов научных работ — без ключей и ограничений.
+        </p>
       </div>
 
       <Card>
-        <div className={styles.topicRow}>
-          <div>
-            <div className={styles.topicLabel}>Тема работы</div>
-            <div className={styles.topicValue}>«{selectedTopic}»</div>
+        <div className={styles.searchRow}>
+          <div className={styles.topicInfo}>
+            <div className={styles.topicLabel}>Тема поиска</div>
+            <div className={styles.topicValue}>«{topicFormulation}»</div>
           </div>
-          <div className={styles.controls}>
-            <Select label="Кол-во источников" value={String(count)} onChange={(e) => setCount(Number(e.target.value))} options={countOptions} />
-            <Button onClick={handleSearch} loading={loadingLiterature} style={{ alignSelf: 'flex-end' }}>
-              <Wand2 size={16} /> Подобрать
+          <div className={styles.searchControls}>
+            <Select
+              value={String(count)}
+              onChange={(e) => setCount(Number(e.target.value))}
+              options={countOptions}
+            />
+            <Button onClick={handleSearch} loading={loadingLiterature}>
+              <Wand2 size={16} /> Найти литературу
             </Button>
           </div>
         </div>
@@ -89,31 +85,47 @@ export function LiteraturePage() {
 
       {literature.length > 0 && (
         <Card
-          title={`Список литературы (${literature.length} источников)`}
-          subtitle="Оформление по ГОСТ 7.0.5-2008"
+          title={`Найдено источников: ${literature.length}`}
+          subtitle={`🇷🇺 Русскоязычных: ${ruCount} · 🌍 Англоязычных: ${enCount}`}
         >
-          <div className={styles.copyRow}>
-            <Button variant="secondary" size="sm" onClick={handleCopyAll}>
-              {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Копировать список</>}
+          <div className={styles.toolbar}>
+            <Button variant="secondary" size="sm" onClick={handleCopy}>
+              {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Копировать список (ГОСТ)</>}
             </Button>
           </div>
-          <ol className={styles.list}>
-            {literature.map((s, i) => {
-              const Icon = TYPE_ICONS[s.type];
-              return (
-                <li key={i} className={styles.item}>
-                  <div className={styles.itemHeader}>
-                    <span className={`${styles.badge} ${styles[s.type]}`}>
-                      <Icon size={12} /> {TYPE_LABELS[s.type]}
-                    </span>
-                    <span className={styles.year}>{s.year}</span>
-                  </div>
-                  <div className={styles.gost}>{formatGost(s)}</div>
-                </li>
-              );
-            })}
-          </ol>
+          <div className={styles.list}>
+            {literature.map((s, i) => (
+              <div key={i} className={styles.item}>
+                <div className={styles.itemHeader}>
+                  <span className={`${styles.lang} ${s.language === 'ru' ? styles.ru : styles.en}`}>
+                    {s.language === 'ru' ? '🇷🇺 РУС' : '🌍 ENG'}
+                  </span>
+                  {s.year && <span className={styles.year}>{s.year}</span>}
+                  {s.url && (
+                    <a href={s.url} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                      <ExternalLink size={13} /> Открыть
+                    </a>
+                  )}
+                </div>
+                <div className={styles.itemTitle}>{s.title}</div>
+                <div className={styles.itemMeta}>
+                  {s.authors.length > 0 && (
+                    <span><BookOpen size={12} /> {s.authors.slice(0, 3).join(', ')}{s.authors.length > 3 ? ' и др.' : ''}</span>
+                  )}
+                  {s.source && <span><Globe size={12} /> {s.source}</span>}
+                </div>
+                {s.doi && <div className={styles.doi}>DOI: {s.doi}</div>}
+                <div className={styles.gost}>{formatGost(s, i + 1)}</div>
+              </div>
+            ))}
+          </div>
         </Card>
+      )}
+
+      {literature.length > 0 && (
+        <Button onClick={() => navigate('/summary')}>
+          Далее: итоговый документ <ArrowRight size={16} />
+        </Button>
       )}
     </div>
   );

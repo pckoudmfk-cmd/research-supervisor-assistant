@@ -1,0 +1,54 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.pageHeader { margin-bottom: 4px; }
+.title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 680px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.btn { margin-top: 14px; }
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 36px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  min-height: 160px; justify-content: center;
+}
+.dropzone:hover, .dropzone.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.uploadIcon { color: var(--text-muted); }
+.dropText { font-size: 14px; color: var(--text-secondary); }
+
+.topicList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+.topicItem {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer; text-align: left;
+  color: var(--text-primary); font-size: 14px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.topicItem:hover { border-color: var(--accent); background: var(--accent-light); }
+.topicItem.selected { border-color: var(--accent); background: var(--accent-light); }
+.check { color: var(--accent); flex-shrink: 0; }
+.topicNum {
+  min-width: 22px; height: 22px;
+  background: var(--border); border-radius: 5px;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: var(--text-secondary);
+}
+.topicItem.selected .topicNum { background: var(--accent); color: #fff; }
+.topicText { flex: 1; line-height: 1.4; }
+
+.selected_info {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.selectedLabel { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.selectedTopic { font-size: 15px; font-style: italic; color: var(--text-primary); font-weight: 500; }

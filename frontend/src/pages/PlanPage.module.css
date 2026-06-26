@@ -1,0 +1,24 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.pageHeader { margin-bottom: 4px; }
+.title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.topicRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.topicLabel { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.topicValue { font-size: 15px; font-style: italic; color: var(--text-primary); font-weight: 500; }
+.planGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.section { display: flex; flex-direction: column; gap: 12px; }
+.sectionTitle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+.icon { color: var(--accent); }
+.goalText { font-size: 15px; color: var(--text-primary); line-height: 1.6; font-style: italic; border-left: 3px solid var(--accent); padding-left: 14px; }
+.keywords { display: flex; flex-wrap: wrap; gap: 8px; }
+.keyword { background: var(--accent-light); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid var(--accent); opacity: 0.8; }
+.objectives { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.objective { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+.objNum { min-width: 24px; height: 24px; background: var(--accent); color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chapters { display: flex; flex-direction: column; gap: 12px; }
+.chapter { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; transition: border-color 0.15s; }
+.chapter:hover { border-color: var(--accent); }
+.chapterNum { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.chapterTitle { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.chapterDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px; color: var(--text-secondary); }

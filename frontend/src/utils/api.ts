@@ -1,28 +1,48 @@
 import axios from 'axios';
-import type {
-  TopicGenerateRequest,
-  ResearchPlanResponse,
-  LiteratureSearchResponse,
-  WorkType,
-  Level,
-} from '../types';
+import type { WorkType, Level, LiteratureSource, Chapter } from '../types';
 
-const api = axios.create({ baseURL: 'http://localhost:8000/api' });
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const api = axios.create({ baseURL: `${BASE}/api` });
 
-export const generateTopics = (req: TopicGenerateRequest) =>
-  api.post<{ topics: string[] }>('/topics/generate', req).then((r) => r.data.topics);
+// КТП
+export const parseKtp = (text: string) =>
+  api.post<{ topics: string[] }>('/ktp/parse', { text }).then((r) => r.data.topics);
 
-export const generateTopicsFromFile = (file: File, work_type: WorkType, level: Level, count: number) => {
+export const parseKtpFile = (file: File) => {
   const form = new FormData();
   form.append('file', file);
-  form.append('work_type', work_type);
-  form.append('level', level);
-  form.append('count', String(count));
-  return api.post<{ topics: string[] }>('/topics/generate-from-file', form).then((r) => r.data.topics);
+  return api.post<{ topics: string[] }>('/ktp/parse-file', form).then((r) => r.data.topics);
 };
 
-export const generateResearchPlan = (topic: string, work_type: WorkType, level: Level) =>
-  api.post<ResearchPlanResponse>('/research-plan/generate', { topic, work_type, level }).then((r) => r.data);
+// Формулировка темы
+export interface FormulationResult {
+  topic: string;
+  relevance: string;
+  novelty: string;
+}
+export const generateFormulation = (
+  ktp_topic: string,
+  work_type: WorkType,
+  level: Level,
+  direction: string,
+  subject_area: string
+) =>
+  api
+    .post<FormulationResult>('/formulation/generate', { ktp_topic, work_type, level, direction, subject_area })
+    .then((r) => r.data);
 
-export const searchLiterature = (topic: string, work_type: WorkType, level: Level, count: number) =>
-  api.post<LiteratureSearchResponse>('/literature/search', { topic, work_type, level, count }).then((r) => r.data.sources);
+// План
+export interface PlanResult {
+  goal: string;
+  objectives: string[];
+  keywords: string[];
+  chapters: Chapter[];
+}
+export const generatePlan = (topic: string, work_type: WorkType, level: Level) =>
+  api.post<PlanResult>('/plan/generate', { topic, work_type, level }).then((r) => r.data);
+
+// Литература
+export const searchLiterature = (topic: string, count = 10) =>
+  api
+    .post<{ sources: LiteratureSource[] }>('/literature/search', { topic, count })
+    .then((r) => r.data.sources);

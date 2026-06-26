@@ -5,52 +5,60 @@ WorkType = Literal["article", "thesis", "coursework", "vkr", "practical"]
 Level = Literal["spo", "vuz"]
 
 
-class TopicGenerateRequest(BaseModel):
-    subject_area: str
-    work_type: WorkType
-    level: Level
-    keywords: Optional[str] = None
-    count: int = 5
+class KtpParseRequest(BaseModel):
+    text: str
 
 
-class TopicGenerateResponse(BaseModel):
+class KtpParseResponse(BaseModel):
     topics: list[str]
 
 
-class ResearchPlanRequest(BaseModel):
-    topic: str
+class TopicFormulationRequest(BaseModel):
+    ktp_topic: str
     work_type: WorkType
     level: Level
+    direction: str
+    subject_area: str
 
 
-class ResearchPlanSection(BaseModel):
+class TopicFormulationResponse(BaseModel):
+    topic: str
+    relevance: str
+    novelty: str
+
+
+class Chapter(BaseModel):
+    number: int
     title: str
     description: str
-    estimated_pages: int
 
 
-class ResearchPlanResponse(BaseModel):
+class PlanRequest(BaseModel):
     topic: str
     work_type: WorkType
     level: Level
-    sections: list[ResearchPlanSection]
-    total_pages: int
+
+
+class PlanResponse(BaseModel):
+    goal: str
+    objectives: list[str]
+    keywords: list[str]
+    chapters: list[Chapter]
 
 
 class LiteratureSearchRequest(BaseModel):
     topic: str
-    work_type: WorkType
-    level: Level
     count: int = 10
 
 
 class LiteratureSource(BaseModel):
     title: str
-    author: str
-    year: int
-    type: Literal["book", "article", "online", "regulatory"]
-    publisher: Optional[str] = None
+    authors: list[str]
+    year: Optional[int] = None
+    source: Optional[str] = None
+    doi: Optional[str] = None
     url: Optional[str] = None
+    language: Literal["ru", "en", "unknown"] = "unknown"
 
 
 class LiteratureSearchResponse(BaseModel):

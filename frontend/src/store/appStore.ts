@@ -1,43 +1,58 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { WorkType, Level, Theme, ResearchPlanResponse, LiteratureSource } from '../types';
+import type { WorkType, Level, Theme, Chapter, LiteratureSource } from '../types';
 
 interface AppState {
-  // Settings
   theme: Theme;
+
+  // Шаг 1 — КТП
+  ktpText: string;
+  ktpTopics: string[];
+  selectedKtpTopic: string;
+
+  // Шаг 2 — Тема
   workType: WorkType;
   level: Level;
-
-  // Module 1 — Topic input
+  direction: string;
   subjectArea: string;
-  keywords: string;
-  topicCount: number;
-  generatedTopics: string[];
-  selectedTopic: string;
+  topicFormulation: string;
+  relevance: string;
+  novelty: string;
 
-  // Module 3 — Research plan
-  researchPlan: ResearchPlanResponse | null;
+  // Шаг 3 — План
+  goal: string;
+  objectives: string[];
+  keywords: string[];
+  chapters: Chapter[];
 
-  // Module 4 — Literature
+  // Шаг 4 — Литература
   literature: LiteratureSource[];
 
-  // Loading states
-  loadingTopics: boolean;
+  // Загрузка
+  loadingKtp: boolean;
+  loadingFormulation: boolean;
   loadingPlan: boolean;
   loadingLiterature: boolean;
 
-  // Actions
-  setTheme: (theme: Theme) => void;
-  setWorkType: (wt: WorkType) => void;
-  setLevel: (level: Level) => void;
+  // Сеттеры
+  setTheme: (v: Theme) => void;
+  setKtpText: (v: string) => void;
+  setKtpTopics: (v: string[]) => void;
+  setSelectedKtpTopic: (v: string) => void;
+  setWorkType: (v: WorkType) => void;
+  setLevel: (v: Level) => void;
+  setDirection: (v: string) => void;
   setSubjectArea: (v: string) => void;
-  setKeywords: (v: string) => void;
-  setTopicCount: (n: number) => void;
-  setGeneratedTopics: (topics: string[]) => void;
-  setSelectedTopic: (topic: string) => void;
-  setResearchPlan: (plan: ResearchPlanResponse | null) => void;
-  setLiterature: (sources: LiteratureSource[]) => void;
-  setLoadingTopics: (v: boolean) => void;
+  setTopicFormulation: (v: string) => void;
+  setRelevance: (v: string) => void;
+  setNovelty: (v: string) => void;
+  setGoal: (v: string) => void;
+  setObjectives: (v: string[]) => void;
+  setKeywords: (v: string[]) => void;
+  setChapters: (v: Chapter[]) => void;
+  setLiterature: (v: LiteratureSource[]) => void;
+  setLoadingKtp: (v: boolean) => void;
+  setLoadingFormulation: (v: boolean) => void;
   setLoadingPlan: (v: boolean) => void;
   setLoadingLiterature: (v: boolean) => void;
 }
@@ -46,33 +61,50 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       theme: 'dark',
+      ktpText: '',
+      ktpTopics: [],
+      selectedKtpTopic: '',
       workType: 'coursework',
       level: 'vuz',
+      direction: '',
       subjectArea: '',
-      keywords: '',
-      topicCount: 5,
-      generatedTopics: [],
-      selectedTopic: '',
-      researchPlan: null,
+      topicFormulation: '',
+      relevance: '',
+      novelty: '',
+      goal: '',
+      objectives: [],
+      keywords: [],
+      chapters: [],
       literature: [],
-      loadingTopics: false,
+      loadingKtp: false,
+      loadingFormulation: false,
       loadingPlan: false,
       loadingLiterature: false,
 
       setTheme: (theme) => set({ theme }),
+      setKtpText: (ktpText) => set({ ktpText }),
+      setKtpTopics: (ktpTopics) => set({ ktpTopics }),
+      setSelectedKtpTopic: (selectedKtpTopic) => set({ selectedKtpTopic }),
       setWorkType: (workType) => set({ workType }),
       setLevel: (level) => set({ level }),
+      setDirection: (direction) => set({ direction }),
       setSubjectArea: (subjectArea) => set({ subjectArea }),
+      setTopicFormulation: (topicFormulation) => set({ topicFormulation }),
+      setRelevance: (relevance) => set({ relevance }),
+      setNovelty: (novelty) => set({ novelty }),
+      setGoal: (goal) => set({ goal }),
+      setObjectives: (objectives) => set({ objectives }),
       setKeywords: (keywords) => set({ keywords }),
-      setTopicCount: (topicCount) => set({ topicCount }),
-      setGeneratedTopics: (generatedTopics) => set({ generatedTopics }),
-      setSelectedTopic: (selectedTopic) => set({ selectedTopic }),
-      setResearchPlan: (researchPlan) => set({ researchPlan }),
+      setChapters: (chapters) => set({ chapters }),
       setLiterature: (literature) => set({ literature }),
-      setLoadingTopics: (loadingTopics) => set({ loadingTopics }),
+      setLoadingKtp: (loadingKtp) => set({ loadingKtp }),
+      setLoadingFormulation: (loadingFormulation) => set({ loadingFormulation }),
       setLoadingPlan: (loadingPlan) => set({ loadingPlan }),
       setLoadingLiterature: (loadingLiterature) => set({ loadingLiterature }),
     }),
-    { name: 'rsa-storage', partialize: (s) => ({ theme: s.theme, workType: s.workType, level: s.level }) }
+    {
+      name: 'rsa-v2',
+      partialize: (s) => ({ theme: s.theme, workType: s.workType, level: s.level }),
+    }
   )
 );

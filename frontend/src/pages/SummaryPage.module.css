@@ -1,0 +1,26 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.pageHeader { margin-bottom: 4px; }
+.title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.desc { font-size: 14px; color: var(--text-secondary); }
+.toolbar { display: flex; gap: 10px; }
+.docCard { }
+.docHeader { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 2px solid var(--accent); margin-bottom: 24px; }
+.docIcon { color: var(--accent); }
+.docType { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.docDir { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.docSection { margin-bottom: 24px; }
+.secLabel { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 8px; }
+.secTitle { font-size: 18px; font-weight: 600; font-style: italic; color: var(--text-primary); line-height: 1.4; }
+.secText { font-size: 14px; color: var(--text-primary); line-height: 1.7; }
+.secGoal { font-size: 15px; font-style: italic; color: var(--text-primary); border-left: 3px solid var(--accent); padding-left: 14px; line-height: 1.6; }
+.objectives { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.objectives li { font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+.keywords { display: flex; flex-wrap: wrap; gap: 8px; }
+.kw { background: var(--accent-light); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 13px; border: 1px solid var(--accent); opacity: 0.8; }
+.chapter { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
+.chapter strong { color: var(--text-primary); }
+.chapter span { color: var(--text-secondary); font-size: 13px; }
+.litList { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.litItem { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.docFooter { border-top: 1px solid var(--border); padding-top: 16px; font-size: 12px; color: var(--text-muted); font-style: italic; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px; color: var(--text-secondary); }
