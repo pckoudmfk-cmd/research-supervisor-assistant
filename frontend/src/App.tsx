@@ -16,7 +16,7 @@ export default function App() {
   }, [theme]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/research-supervisor-assistant">
       <Layout>
         <Routes>
           <Route path="/" element={<KtpPage />} />
