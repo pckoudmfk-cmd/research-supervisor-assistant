@@ -1,0 +1,33 @@
+.header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { font-size: 28px; }
+.title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.subtitle { font-size: 12px; color: var(--text-secondary); }
+.themes { display: flex; gap: 4px; }
+.themeBtn {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.themeBtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.themeBtn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }

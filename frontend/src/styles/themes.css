@@ -1,0 +1,59 @@
+/* ── Dark theme (default) ──────────────────────────────── */
+[data-theme='dark'] {
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d27;
+  --bg-card: #1e2130;
+  --bg-hover: #252840;
+  --border: #2e3150;
+  --text-primary: #e8eaf6;
+  --text-secondary: #8b93c4;
+  --text-muted: #555b80;
+  --accent: #6c75f5;
+  --accent-hover: #818af8;
+  --accent-light: rgba(108, 117, 245, 0.15);
+  --success: #4caf7d;
+  --warning: #f5a623;
+  --error: #f56565;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --radius: 12px;
+}
+
+/* ── Light theme ───────────────────────────────────────── */
+[data-theme='light'] {
+  --bg-primary: #f5f6fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f1f8;
+  --border: #e0e3f0;
+  --text-primary: #1a1d2e;
+  --text-secondary: #4a5080;
+  --text-muted: #9099c0;
+  --accent: #4f5af0;
+  --accent-hover: #3d48e0;
+  --accent-light: rgba(79, 90, 240, 0.1);
+  --success: #38a169;
+  --warning: #d97706;
+  --error: #e53e3e;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --radius: 12px;
+}
+
+/* ── Gold theme ────────────────────────────────────────── */
+[data-theme='gold'] {
+  --bg-primary: #1a1508;
+  --bg-secondary: #221c0a;
+  --bg-card: #2a2210;
+  --bg-hover: #342b14;
+  --border: #4a3d1a;
+  --text-primary: #f5e6c0;
+  --text-secondary: #c8a84b;
+  --text-muted: #7a6530;
+  --accent: #d4a017;
+  --accent-hover: #e8b420;
+  --accent-light: rgba(212, 160, 23, 0.15);
+  --success: #7cb87a;
+  --warning: #e8b420;
+  --error: #f08080;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --radius: 12px;
+}
