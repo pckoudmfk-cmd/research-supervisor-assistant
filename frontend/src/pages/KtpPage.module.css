@@ -1,7 +1,61 @@
 .page { display: flex; flex-direction: column; gap: 20px; }
 .pageHeader { margin-bottom: 4px; }
-.title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
-.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 680px; }
+.title { font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em; }
+.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 680px; }
+
+/* Work type cards */
+.workTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.workTypeCard {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 10px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  color: var(--text-secondary);
+}
+.workTypeCard:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.workTypeActive { border-color: var(--accent) !important; background: var(--accent-light) !important; color: var(--accent) !important; }
+.workTypeIcon { flex-shrink: 0; }
+.workTypeLabel { font-size: 12px; font-weight: 600; text-align: center; line-height: 1.3; }
+.workTypeCheck { position: absolute; top: 6px; right: 6px; color: var(--accent); }
+
+/* Params */
+.paramsGrid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 20px; align-items: start; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.fieldLabel { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.levelButtons { display: flex; gap: 8px; }
+.levelBtn {
+  flex: 1; padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.levelBtn:hover { border-color: var(--accent); color: var(--accent); }
+.levelActive { border-color: var(--accent) !important; background: var(--accent-light) !important; color: var(--accent) !important; }
+.input {
+  width: 100%; padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px; color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text-muted); }
+
+/* KTP grid */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .btn { margin-top: 14px; }
 
@@ -21,12 +75,13 @@
 .uploadIcon { color: var(--text-muted); }
 .dropText { font-size: 14px; color: var(--text-secondary); }
 
+/* Topic list */
 .topicList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
 .topicItem {
   display: flex; align-items: center; gap: 10px;
-  padding: 11px 14px;
+  padding: 12px 14px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 8px;
   cursor: pointer; text-align: left;
   color: var(--text-primary); font-size: 14px;
@@ -36,19 +91,19 @@
 .topicItem.selected { border-color: var(--accent); background: var(--accent-light); }
 .check { color: var(--accent); flex-shrink: 0; }
 .topicNum {
-  min-width: 22px; height: 22px;
-  background: var(--border); border-radius: 5px;
+  min-width: 24px; height: 24px;
+  background: var(--border); border-radius: 6px;
   font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; color: var(--text-secondary);
 }
 .topicItem.selected .topicNum { background: var(--accent); color: #fff; }
-.topicText { flex: 1; line-height: 1.4; }
+.topicText { flex: 1; line-height: 1.4; font-weight: 500; }
 
 .selected_info {
-  padding-top: 16px;
+  padding-top: 18px;
   border-top: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column; gap: 10px;
 }
-.selectedLabel { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.selectedTopic { font-size: 15px; font-style: italic; color: var(--text-primary); font-weight: 500; }
+.selectedLabel { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.selectedTopic { font-size: 15px; font-style: italic; color: var(--text-primary); font-weight: 600; }

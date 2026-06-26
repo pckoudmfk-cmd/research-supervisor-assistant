@@ -20,21 +20,21 @@
 
 /* ── Light theme ───────────────────────────────────────── */
 [data-theme='light'] {
-  --bg-primary: #f5f6fa;
-  --bg-secondary: #ffffff;
+  --bg-primary: #eef0f8;
+  --bg-secondary: #f7f8fc;
   --bg-card: #ffffff;
-  --bg-hover: #f0f1f8;
-  --border: #e0e3f0;
-  --text-primary: #1a1d2e;
-  --text-secondary: #4a5080;
-  --text-muted: #9099c0;
-  --accent: #4f5af0;
-  --accent-hover: #3d48e0;
-  --accent-light: rgba(79, 90, 240, 0.1);
-  --success: #38a169;
-  --warning: #d97706;
-  --error: #e53e3e;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --bg-hover: #e8eaf6;
+  --border: #c8ccdf;
+  --text-primary: #0d0f1c;
+  --text-secondary: #2d3362;
+  --text-muted: #7077a0;
+  --accent: #4338ca;
+  --accent-hover: #3730a3;
+  --accent-light: rgba(67, 56, 202, 0.1);
+  --success: #166534;
+  --warning: #92400e;
+  --error: #991b1b;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 32px rgba(67,56,202,0.08);
   --radius: 12px;
 }
 

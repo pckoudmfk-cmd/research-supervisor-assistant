@@ -10,6 +10,12 @@ body {
   transition: background-color 0.2s, color 0.2s;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 #root { min-height: 100vh; display: flex; flex-direction: column; }

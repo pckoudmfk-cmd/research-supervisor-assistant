@@ -1,13 +1,25 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Wand2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Upload, Wand2, ArrowRight, CheckCircle2, FileText, BookOpen, GraduationCap, Briefcase, Newspaper } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
 import { parseKtp, parseKtpFile } from '../utils/api';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Textarea } from '../components/ui/Textarea';
+import type { WorkType, Level } from '../types';
+import { WORK_TYPE_LABELS, LEVEL_LABELS } from '../types';
 import styles from './KtpPage.module.css';
+
+const WORK_TYPE_ICONS: Record<WorkType, typeof FileText> = {
+  article: Newspaper,
+  thesis: BookOpen,
+  coursework: FileText,
+  vkr: GraduationCap,
+  practical: Briefcase,
+};
+
+const WORK_TYPES: WorkType[] = ['article', 'thesis', 'coursework', 'vkr', 'practical'];
 
 export function KtpPage() {
   const navigate = useNavigate();
@@ -16,6 +28,10 @@ export function KtpPage() {
     ktpTopics, setKtpTopics,
     selectedKtpTopic, setSelectedKtpTopic,
     loadingKtp, setLoadingKtp,
+    workType, setWorkType,
+    level, setLevel,
+    direction, setDirection,
+    subjectArea, setSubjectArea,
   } = useAppStore();
 
   const onDrop = useCallback(async (files: File[]) => {
@@ -51,16 +67,75 @@ export function KtpPage() {
       <div className={styles.pageHeader}>
         <h1 className={styles.title}>Загрузка тем КТП</h1>
         <p className={styles.desc}>
-          Вставьте темы из календарно-тематического плана или загрузите файл.
+          Укажите параметры работы, вставьте темы из календарно-тематического плана или загрузите файл.
           AI извлечёт учебные темы и предложит их для дальнейшей научной работы.
         </p>
       </div>
 
+      {/* Тип работы */}
+      <Card title="Тип научной работы" subtitle="Выберите вид разрабатываемого документа">
+        <div className={styles.workTypeGrid}>
+          {WORK_TYPES.map((wt) => {
+            const Icon = WORK_TYPE_ICONS[wt];
+            return (
+              <button
+                key={wt}
+                className={`${styles.workTypeCard} ${workType === wt ? styles.workTypeActive : ''}`}
+                onClick={() => setWorkType(wt)}
+              >
+                <Icon size={22} className={styles.workTypeIcon} />
+                <span className={styles.workTypeLabel}>{WORK_TYPE_LABELS[wt]}</span>
+                {workType === wt && <CheckCircle2 size={14} className={styles.workTypeCheck} />}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Параметры */}
+      <Card title="Параметры подготовки">
+        <div className={styles.paramsGrid}>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Уровень образования</label>
+            <div className={styles.levelButtons}>
+              {(['spo', 'vuz'] as Level[]).map((l) => (
+                <button
+                  key={l}
+                  className={`${styles.levelBtn} ${level === l ? styles.levelActive : ''}`}
+                  onClick={() => setLevel(l)}
+                >
+                  {LEVEL_LABELS[l]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Направление подготовки / специальность</label>
+            <input
+              className={styles.input}
+              placeholder="Например: Информационные технологии, 09.02.07"
+              value={direction}
+              onChange={(e) => setDirection(e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Дисциплина / предмет</label>
+            <input
+              className={styles.input}
+              placeholder="Например: Основы программирования, Информатика"
+              value={subjectArea}
+              onChange={(e) => setSubjectArea(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Ввод КТП */}
       <div className={styles.grid}>
         <Card title="Текст КТП или рабочей программы">
           <Textarea
             placeholder="Вставьте сюда темы занятий из КТП, рабочей программы или учебного плана..."
-            rows={8}
+            rows={7}
             value={ktpText}
             onChange={(e) => setKtpText(e.target.value)}
           />
