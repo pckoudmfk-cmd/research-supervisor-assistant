@@ -1,20 +1,24 @@
-/* ── Dark theme (default) ──────────────────────────────── */
+/* ── Dark / Glowing Blue theme (default) ─────────────────── */
 :root, [data-theme='dark'] {
-  --bg-primary: #0f1117;
-  --bg-secondary: #1a1d27;
-  --bg-card: #1e2130;
-  --bg-hover: #252840;
-  --border: #2e3150;
-  --text-primary: #e8eaf6;
-  --text-secondary: #8b93c4;
-  --text-muted: #555b80;
-  --accent: #6c75f5;
-  --accent-hover: #818af8;
-  --accent-light: rgba(108, 117, 245, 0.15);
-  --success: #4caf7d;
-  --warning: #f5a623;
-  --error: #f56565;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --bg-primary: #070912;
+  --bg-secondary: #0c0f1e;
+  --bg-card: #101527;
+  --bg-hover: #161c32;
+  --border: #1d2545;
+  --text-primary: #dce8ff;
+  --text-secondary: #6b8ccc;
+  --text-muted: #334470;
+  --accent: #3d8ef8;
+  --accent-hover: #5aa3ff;
+  --accent-light: rgba(61, 142, 248, 0.13);
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(61, 142, 248, 0.07),
+    0 8px 32px rgba(61, 142, 248, 0.08);
+  --glow: 0 0 18px rgba(61, 142, 248, 0.35), 0 0 48px rgba(61, 142, 248, 0.12);
   --radius: 12px;
 }
 
@@ -35,25 +39,29 @@
   --warning: #92400e;
   --error: #991b1b;
   --shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 32px rgba(67,56,202,0.08);
+  --glow: none;
   --radius: 12px;
 }
 
-/* ── Gold theme ────────────────────────────────────────── */
+/* ── Gold + Blue Glow theme ─────────────────────────────── */
 [data-theme='gold'] {
-  --bg-primary: #1a1508;
-  --bg-secondary: #221c0a;
-  --bg-card: #2a2210;
-  --bg-hover: #342b14;
-  --border: #4a3d1a;
-  --text-primary: #f5e6c0;
-  --text-secondary: #c8a84b;
-  --text-muted: #7a6530;
-  --accent: #d4a017;
-  --accent-hover: #e8b420;
-  --accent-light: rgba(212, 160, 23, 0.15);
-  --success: #7cb87a;
-  --warning: #e8b420;
-  --error: #f08080;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --bg-primary: #090701;
+  --bg-secondary: #110e02;
+  --bg-card: #17120a;
+  --bg-hover: #1f1808;
+  --border: #2e2408;
+  --text-primary: #fef3d0;
+  --text-secondary: #c49a2a;
+  --text-muted: #6b5415;
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-light: rgba(56, 189, 248, 0.12);
+  --success: #34d399;
+  --warning: #f59e0b;
+  --error: #f87171;
+  --shadow:
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 8px 32px rgba(56, 189, 248, 0.07);
+  --glow: 0 0 18px rgba(56, 189, 248, 0.4), 0 0 48px rgba(56, 189, 248, 0.15);
   --radius: 12px;
 }

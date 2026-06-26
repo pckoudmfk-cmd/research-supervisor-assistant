@@ -31,4 +31,4 @@
   transition: all 0.15s;
 }
 .themeBtn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent); }
-.themeBtn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.themeBtn.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--glow, none); }

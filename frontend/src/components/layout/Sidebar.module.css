@@ -30,7 +30,7 @@
   transition: background 0.15s, color 0.15s;
 }
 .item:hover { background: var(--bg-hover); color: var(--text-primary); }
-.item.active { background: var(--accent); color: #fff; font-weight: 600; }
+.item.active { background: var(--accent); color: #fff; font-weight: 600; box-shadow: var(--glow, none); }
 .badge {
   width: 22px; height: 22px;
   background: var(--bg-secondary);
