@@ -17,11 +17,33 @@ async function ai(prompt: string): Promise<string> {
   return res.text();
 }
 
+function repairJson(raw: string): string {
+  const openers: string[] = [];
+  let inStr = false;
+  let esc = false;
+  let out = '';
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    out += c;
+    if (esc) { esc = false; continue; }
+    if (c === '\\' && inStr) { esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === '{') openers.push('}');
+    else if (c === '[') openers.push(']');
+    else if ((c === '}' || c === ']') && openers.length) openers.pop();
+  }
+  if (inStr) out += '"';
+  while (openers.length) out += openers.pop();
+  return out;
+}
+
 function extractJson(text: string): any {
   const match = text.match(/```(?:json)?\s*([\s\S]+?)```/);
   const cleaned = match ? match[1].trim() : text.trim();
   const start = cleaned.indexOf('{');
-  return JSON.parse(start !== -1 ? cleaned.slice(start) : cleaned);
+  const raw = start !== -1 ? cleaned.slice(start) : cleaned;
+  try { return JSON.parse(raw); } catch { return JSON.parse(repairJson(raw)); }
 }
 
 // ---------- Характеристики типов работ ----------
@@ -112,9 +134,9 @@ function formulationPrompt(
   "topic": "Уточнённая академическая формулировка темы (объект + предмет исследования)",
   "object": "Объект исследования — широкая область",
   "subject": "Предмет исследования — конкретный аспект",
-  "relevance": "Актуальность: 3–4 предложения. Какие современные проблемы или противоречия делают эту тему важной. Конкретные факты, тенденции.",
-  "novelty": "Научная новизна: 2–3 предложения. Что именно нового вносит данная работа. Чем отличается от уже изученного.",
-  "hypothesis": "Гипотеза исследования (для ${wi.name}): предположение, которое будет проверяться"
+  "relevance": "Актуальность: 2–3 предложения о современных проблемах и противоречиях в этой теме.",
+  "novelty": "Научная новизна: 1–2 предложения о том, что нового вносит данная работа.",
+  "hypothesis": "Гипотеза исследования: одно предложение-предположение, которое будет проверяться"
 }`;
 }
 
@@ -146,7 +168,7 @@ function planPrompt(topic: string, object: string, subject: string, workType: st
     {
       "number": 1,
       "title": "Название раздела/главы",
-      "description": "Что конкретно делать студенту в этом разделе: какие вопросы раскрыть, какие методы использовать, какой результат получить (2–3 предложения)"
+      "description": "Что делать студенту в этом разделе: ключевые вопросы и ожидаемый результат (1–2 предложения)"
     }
   ],
   "methods": ["метод 1", "метод 2", "метод 3"],
