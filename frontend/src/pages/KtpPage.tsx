@@ -47,7 +47,11 @@ export function KtpPage() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'text/*': ['.txt', '.md'], 'application/pdf': ['.pdf'] },
+    accept: {
+      'text/*': ['.txt', '.md'],
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    },
     maxFiles: 1,
   });
 
@@ -149,7 +153,7 @@ export function KtpPage() {
           </Button>
         </Card>
 
-        <Card title="Загрузка файла" subtitle="Поддерживаются .txt, .md, .pdf">
+        <Card title="Загрузка файла" subtitle="Поддерживаются .pdf, .docx, .txt, .md">
           <div
             {...getRootProps()}
             className={`${styles.dropzone} ${isDragActive ? styles.active : ''}`}
