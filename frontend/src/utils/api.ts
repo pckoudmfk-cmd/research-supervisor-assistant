@@ -1,33 +1,21 @@
 import type { WorkType, Level, LiteratureSource, Chapter } from '../types';
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
-
-// ---------- Groq call ----------
+// ---------- Pollinations.ai — бесплатно, без ключей ----------
 
 async function ai(prompt: string): Promise<string> {
-  const key = localStorage.getItem('groq-api-key') ?? '';
-  if (!key) throw new Error('API_KEY_MISSING');
-
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch('https://text.pollinations.ai/', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: MODEL,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.5,
-      max_tokens: 3000,
+      model: 'openai',
+      seed: 42,
+      private: true,
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const msg = err?.error?.message ?? `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? '';
+  if (!res.ok) throw new Error(`Ошибка сервиса AI: HTTP ${res.status}`);
+  return res.text();
 }
 
 function extractJson(text: string): any {
@@ -111,11 +99,7 @@ export async function parseKtp(text: string): Promise<string[]> {
 }
 
 export async function parseKtpFile(file: File): Promise<string[]> {
-  const key = localStorage.getItem('groq-api-key') ?? '';
-  if (!key) throw new Error('API_KEY_MISSING');
-
   let text = '';
-
   if (file.name.toLowerCase().endsWith('.pdf')) {
     text = await readPdfText(file);
   } else if (file.name.toLowerCase().endsWith('.docx')) {
@@ -123,29 +107,25 @@ export async function parseKtpFile(file: File): Promise<string[]> {
   } else {
     text = await file.text();
   }
-
   if (!text.trim()) throw new Error('Файл не содержит текста');
   return parseKtp(text);
 }
 
 async function readPdfText(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
-  // Extract text from PDF using basic byte scanning for ASCII/UTF-8 text streams
   const bytes = new Uint8Array(buf);
   const decoder = new TextDecoder('utf-8', { fatal: false });
   const raw = decoder.decode(bytes);
-  // Extract text between BT and ET markers (PDF text objects)
   const chunks: string[] = [];
   const btEt = raw.match(/BT[\s\S]*?ET/g) ?? [];
   for (const block of btEt) {
     const strings = block.match(/\(([^)]*)\)/g) ?? [];
     for (const s of strings) {
-      const content = s.slice(1, -1).replace(/\\n/g, '\n').replace(/\\r/g, '').replace(/\\\(/g, '(').replace(/\\\)/g, ')');
+      const content = s.slice(1, -1).replace(/\\n/g, '\n').replace(/\\\(/g, '(').replace(/\\\)/g, ')');
       if (content.trim()) chunks.push(content);
     }
   }
   const extracted = chunks.join(' ');
-  // Fallback: try raw text if extraction yielded nothing
   return extracted.length > 50 ? extracted : raw.replace(/[^\x20-\x7EЀ-ӿ\n]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -173,7 +153,7 @@ export async function generateFormulation(
 export interface PlanResult { goal: string; objectives: string[]; keywords: string[]; chapters: Chapter[]; }
 
 export async function generatePlan(topic: string, work_type: WorkType, level: Level): Promise<PlanResult> {
-  const text = await ai(planPrompt(topic, work_type, level), );
+  const text = await ai(planPrompt(topic, work_type, level));
   return extractJson(text) as PlanResult;
 }
 
