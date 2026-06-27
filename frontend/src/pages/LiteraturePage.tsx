@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, ArrowRight, Copy, Check, Globe, BookOpen, ExternalLink } from 'lucide-react';
+import { Wand2, ArrowRight, Copy, Check, Globe, BookOpen, ExternalLink, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { searchLiterature } from '../utils/api';
 import { Card } from '../components/ui/Card';
@@ -22,13 +22,17 @@ export function LiteraturePage() {
   const { topicFormulation, keywords, literature, setLiterature, loadingLiterature, setLoadingLiterature } = useAppStore();
   const [count, setCount] = useState(10);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!topicFormulation) return;
+    setError(null);
     setLoadingLiterature(true);
     try {
       const sources = await searchLiterature(topicFormulation, keywords, count);
       setLiterature(sources);
+    } catch (e: any) {
+      setError(e?.message || 'Ошибка при поиске литературы');
     } finally {
       setLoadingLiterature(false);
     }
@@ -63,6 +67,12 @@ export function LiteraturePage() {
           Более 200 миллионов научных работ — без ключей и ограничений.
         </p>
       </div>
+
+      {error && (
+        <div className={styles.errorBox}>
+          <AlertCircle size={16} /><span>{error}</span>
+        </div>
+      )}
 
       <Card>
         <div className={styles.searchRow}>

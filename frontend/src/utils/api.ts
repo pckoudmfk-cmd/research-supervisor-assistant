@@ -260,14 +260,31 @@ export async function generatePlan(
 
 // ---------- Литература ----------
 
+async function translateToEnglish(text: string): Promise<string> {
+  try {
+    const result = await ai(
+      `Translate the following research topic/keywords to English for academic database search. Return only the translation, nothing else:\n"${text}"`
+    );
+    return result.trim().replace(/^["']|["']$/g, '');
+  } catch {
+    return text;
+  }
+}
+
 export async function searchLiterature(topic: string, keywords: string[], count = 10): Promise<LiteratureSource[]> {
   const results: LiteratureSource[] = [];
-  const query = keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic;
+
+  // Translate to English for better search results in international databases
+  const ruQuery = keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic;
+  const enQuery = await translateToEnglish(ruQuery);
+  const query = enQuery || ruQuery;
+
+  let lastError = '';
 
   try {
     const q = encodeURIComponent(query);
     const r = await fetch(
-      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${Math.ceil(count * 0.6)}&fields=title,authors,year,venue,externalIds,openAccessPdf,abstract`
+      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${Math.ceil(count * 0.6)}&fields=title,authors,year,venue,externalIds,openAccessPdf`
     );
     if (r.ok) {
       const d = await r.json();
@@ -285,8 +302,10 @@ export async function searchLiterature(topic: string, keywords: string[], count 
           language: guessLang(p.title),
         });
       }
+    } else {
+      lastError = `Semantic Scholar: HTTP ${r.status}`;
     }
-  } catch { /* ignore */ }
+  } catch (e: any) { lastError = e?.message ?? 'Semantic Scholar недоступен'; }
 
   try {
     const need = count - results.length;
@@ -310,9 +329,19 @@ export async function searchLiterature(topic: string, keywords: string[], count 
             language: guessLang(w.title),
           });
         }
+      } else {
+        lastError = lastError || `OpenAlex: HTTP ${r.status}`;
       }
     }
-  } catch { /* ignore */ }
+  } catch (e: any) { lastError = lastError || (e as any)?.message || 'OpenAlex недоступен'; }
+
+  if (results.length === 0) {
+    throw new Error(
+      lastError
+        ? `Не удалось получить источники: ${lastError}`
+        : 'Источники не найдены. Попробуйте уточнить тему или ключевые слова.'
+    );
+  }
 
   // deduplicate by title
   const seen = new Set<string>();
