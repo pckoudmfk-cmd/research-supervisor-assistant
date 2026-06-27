@@ -2,7 +2,9 @@ import type { WorkType, Level, Difficulty, LiteratureSource, Chapter } from '../
 
 // ---------- Pollinations.ai — бесплатно, без ключей ----------
 
-async function ai(prompt: string): Promise<string> {
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+async function ai(prompt: string, attempt = 0): Promise<string> {
   const res = await fetch('https://text.pollinations.ai/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -13,6 +15,14 @@ async function ai(prompt: string): Promise<string> {
       private: true,
     }),
   });
+
+  if (res.status === 429) {
+    if (attempt >= 4) throw new Error('Сервис AI перегружен — попробуйте через минуту');
+    const delay = [3000, 6000, 12000, 24000][attempt];
+    await sleep(delay);
+    return ai(prompt, attempt + 1);
+  }
+
   if (!res.ok) throw new Error(`Ошибка сервиса AI: HTTP ${res.status}`);
   return res.text();
 }
