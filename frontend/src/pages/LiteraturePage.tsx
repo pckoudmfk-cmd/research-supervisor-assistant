@@ -19,7 +19,7 @@ function formatGost(s: LiteratureSource, index: number): string {
 
 export function LiteraturePage() {
   const navigate = useNavigate();
-  const { topicFormulation, literature, setLiterature, loadingLiterature, setLoadingLiterature } = useAppStore();
+  const { topicFormulation, keywords, literature, setLiterature, loadingLiterature, setLoadingLiterature } = useAppStore();
   const [count, setCount] = useState(10);
   const [copied, setCopied] = useState(false);
 
@@ -27,7 +27,7 @@ export function LiteraturePage() {
     if (!topicFormulation) return;
     setLoadingLiterature(true);
     try {
-      const sources = await searchLiterature(topicFormulation, count);
+      const sources = await searchLiterature(topicFormulation, keywords, count);
       setLiterature(sources);
     } finally {
       setLoadingLiterature(false);

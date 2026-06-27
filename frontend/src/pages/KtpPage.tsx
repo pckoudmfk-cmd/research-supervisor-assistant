@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { AlertCircle } from 'lucide-react';
-import { Upload, Wand2, ArrowRight, CheckCircle2, FileText, BookOpen, GraduationCap, Briefcase, Newspaper } from 'lucide-react';
+import { Upload, Wand2, ArrowRight, CheckCircle2, FileText, BookOpen, GraduationCap, Briefcase, Newspaper, AlertCircle, Lightbulb, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
 import { parseKtp, parseKtpFile } from '../utils/api';
+import type { KtpTopic } from '../utils/api';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Textarea } from '../components/ui/Textarea';
@@ -19,7 +19,6 @@ const WORK_TYPE_ICONS: Record<WorkType, typeof FileText> = {
   vkr: GraduationCap,
   practical: Briefcase,
 };
-
 const WORK_TYPES: WorkType[] = ['article', 'thesis', 'coursework', 'vkr', 'practical'];
 
 export function KtpPage() {
@@ -37,20 +36,32 @@ export function KtpPage() {
 
   const [error, setError] = useState<string | null>(null);
 
+  const runParse = async (text: string) => {
+    setError(null);
+    setLoadingKtp(true);
+    try {
+      const topics = await parseKtp(text, workType, level, direction, subjectArea);
+      setKtpTopics(topics);
+    } catch (e: any) {
+      setError(e?.message || 'Неизвестная ошибка');
+    } finally {
+      setLoadingKtp(false);
+    }
+  };
+
   const onDrop = useCallback(async (files: File[]) => {
     if (!files[0]) return;
     setError(null);
     setLoadingKtp(true);
     try {
-      const topics = await parseKtpFile(files[0]);
+      const topics = await parseKtpFile(files[0], workType, level, direction, subjectArea);
       setKtpTopics(topics);
     } catch (e: any) {
-      const msg = e?.message || 'Неизвестная ошибка';
-      setError(msg === 'API_KEY_MISSING' ? 'Введите Gemini API ключ (см. баннер выше)' : `Ошибка загрузки файла: ${msg}`);
+      setError(e?.message || 'Неизвестная ошибка');
     } finally {
       setLoadingKtp(false);
     }
-  }, []);
+  }, [workType, level, direction, subjectArea]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -62,28 +73,17 @@ export function KtpPage() {
     maxFiles: 1,
   });
 
-  const handleParse = async () => {
-    if (!ktpText.trim()) return;
-    setError(null);
-    setLoadingKtp(true);
-    try {
-      const topics = await parseKtp(ktpText);
-      setKtpTopics(topics);
-    } catch (e: any) {
-      const msg = e?.message || 'Неизвестная ошибка';
-      setError(msg === 'API_KEY_MISSING' ? 'Введите Gemini API ключ (см. баннер выше)' : `Ошибка извлечения тем: ${msg}`);
-    } finally {
-      setLoadingKtp(false);
-    }
+  const selectTopic = (t: KtpTopic) => {
+    setSelectedKtpTopic(t);
   };
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.title}>Загрузка тем КТП</h1>
+        <h1 className={styles.title}>Загрузка КТП и выбор темы</h1>
         <p className={styles.desc}>
-          Укажите параметры работы, вставьте темы из календарно-тематического плана или загрузите файл.
-          AI извлечёт учебные темы и предложит их для дальнейшей научной работы.
+          Укажите параметры работы и загрузите КТП или темы уроков.
+          AI проанализирует материал и предложит перспективные исследовательские направления.
         </p>
       </div>
 
@@ -94,8 +94,7 @@ export function KtpPage() {
         </div>
       )}
 
-      {/* Тип работы */}
-      <Card title="Тип научной работы" subtitle="Выберите вид разрабатываемого документа">
+      <Card title="Тип научной работы" subtitle="Определяет структуру, объём и требования к исследованию">
         <div className={styles.workTypeGrid}>
           {WORK_TYPES.map((wt) => {
             const Icon = WORK_TYPE_ICONS[wt];
@@ -114,7 +113,6 @@ export function KtpPage() {
         </div>
       </Card>
 
-      {/* Параметры */}
       <Card title="Параметры подготовки">
         <div className={styles.paramsGrid}>
           <div className={styles.field}>
@@ -152,22 +150,21 @@ export function KtpPage() {
         </div>
       </Card>
 
-      {/* Ввод КТП */}
       <div className={styles.grid}>
-        <Card title="Текст КТП или рабочей программы">
+        <Card title="Текст КТП или темы уроков">
           <Textarea
-            placeholder="Вставьте сюда темы занятий из КТП, рабочей программы или учебного плана..."
+            placeholder="Вставьте темы занятий из КТП, рабочей программы или просто перечень тем уроков..."
             rows={7}
             value={ktpText}
             onChange={(e) => setKtpText(e.target.value)}
           />
           <Button
             className={styles.btn}
-            onClick={handleParse}
+            onClick={() => runParse(ktpText)}
             loading={loadingKtp}
             disabled={!ktpText.trim()}
           >
-            <Wand2 size={16} /> Извлечь темы
+            <Wand2 size={16} /> Найти исследовательские ракурсы
           </Button>
         </Card>
 
@@ -179,7 +176,7 @@ export function KtpPage() {
             <input {...getInputProps()} />
             <Upload size={28} className={styles.uploadIcon} />
             <p className={styles.dropText}>
-              {isDragActive ? 'Отпустите файл...' : 'Перетащите файл или нажмите для выбора'}
+              {loadingKtp ? 'Анализируем...' : isDragActive ? 'Отпустите файл...' : 'Перетащите файл или нажмите для выбора'}
             </p>
           </div>
         </Card>
@@ -187,21 +184,31 @@ export function KtpPage() {
 
       {ktpTopics.length > 0 && (
         <Card
-          title={`Найдено тем: ${ktpTopics.length}`}
-          subtitle="Выберите одну тему как основу для научного исследования"
+          title={`Найдено исследовательских направлений: ${ktpTopics.length}`}
+          subtitle="Выберите тему, которую будете разрабатывать"
         >
           <div className={styles.topicList}>
             {ktpTopics.map((topic, i) => (
               <button
                 key={i}
-                className={`${styles.topicItem} ${selectedKtpTopic === topic ? styles.selected : ''}`}
-                onClick={() => setSelectedKtpTopic(topic)}
+                className={`${styles.topicItem} ${selectedKtpTopic?.title === topic.title ? styles.selected : ''}`}
+                onClick={() => selectTopic(topic)}
               >
-                {selectedKtpTopic === topic && (
-                  <CheckCircle2 size={16} className={styles.check} />
-                )}
                 <span className={styles.topicNum}>{i + 1}</span>
-                <span className={styles.topicText}>{topic}</span>
+                <div className={styles.topicBody}>
+                  <div className={styles.topicTitle}>{topic.title}</div>
+                  <div className={styles.topicAngle}>
+                    <Lightbulb size={12} className={styles.angleIcon} />
+                    {topic.angle}
+                  </div>
+                  <div className={styles.topicWhy}>
+                    <TrendingUp size={12} className={styles.whyIcon} />
+                    {topic.why}
+                  </div>
+                </div>
+                {selectedKtpTopic?.title === topic.title && (
+                  <CheckCircle2 size={18} className={styles.check} />
+                )}
               </button>
             ))}
           </div>
@@ -209,9 +216,9 @@ export function KtpPage() {
           {selectedKtpTopic && (
             <div className={styles.selected_info}>
               <div className={styles.selectedLabel}>Выбрана тема:</div>
-              <div className={styles.selectedTopic}>«{selectedKtpTopic}»</div>
+              <div className={styles.selectedTopic}>«{selectedKtpTopic.title}»</div>
               <Button onClick={() => navigate('/topic')}>
-                Далее: формулировка темы <ArrowRight size={16} />
+                Далее: разработать тему <ArrowRight size={16} />
               </Button>
             </div>
           )}

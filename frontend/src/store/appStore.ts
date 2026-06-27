@@ -1,55 +1,60 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { WorkType, Level, Theme, Chapter, LiteratureSource } from '../types';
+import type { KtpTopic } from '../utils/api';
 
 interface AppState {
   theme: Theme;
-
-  // Шаг 1 — КТП
-  ktpText: string;
-  ktpTopics: string[];
-  selectedKtpTopic: string;
-
-  // Шаг 2 — Тема
   workType: WorkType;
   level: Level;
   direction: string;
   subjectArea: string;
+
+  ktpText: string;
+  ktpTopics: KtpTopic[];
+  selectedKtpTopic: KtpTopic | null;
+
   topicFormulation: string;
+  topicObject: string;
+  topicSubject: string;
   relevance: string;
   novelty: string;
+  hypothesis: string;
 
-  // Шаг 3 — План
   goal: string;
   objectives: string[];
   keywords: string[];
   chapters: Chapter[];
+  methods: string[];
+  expectedResult: string;
 
-  // Шаг 4 — Литература
   literature: LiteratureSource[];
 
-  // Загрузка
   loadingKtp: boolean;
   loadingFormulation: boolean;
   loadingPlan: boolean;
   loadingLiterature: boolean;
 
-  // Сеттеры
   setTheme: (v: Theme) => void;
-  setKtpText: (v: string) => void;
-  setKtpTopics: (v: string[]) => void;
-  setSelectedKtpTopic: (v: string) => void;
   setWorkType: (v: WorkType) => void;
   setLevel: (v: Level) => void;
   setDirection: (v: string) => void;
   setSubjectArea: (v: string) => void;
+  setKtpText: (v: string) => void;
+  setKtpTopics: (v: KtpTopic[]) => void;
+  setSelectedKtpTopic: (v: KtpTopic | null) => void;
   setTopicFormulation: (v: string) => void;
+  setTopicObject: (v: string) => void;
+  setTopicSubject: (v: string) => void;
   setRelevance: (v: string) => void;
   setNovelty: (v: string) => void;
+  setHypothesis: (v: string) => void;
   setGoal: (v: string) => void;
   setObjectives: (v: string[]) => void;
   setKeywords: (v: string[]) => void;
   setChapters: (v: Chapter[]) => void;
+  setMethods: (v: string[]) => void;
+  setExpectedResult: (v: string) => void;
   setLiterature: (v: LiteratureSource[]) => void;
   setLoadingKtp: (v: boolean) => void;
   setLoadingFormulation: (v: boolean) => void;
@@ -61,20 +66,25 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       theme: 'dark',
-      ktpText: '',
-      ktpTopics: [],
-      selectedKtpTopic: '',
       workType: 'coursework',
       level: 'vuz',
       direction: '',
       subjectArea: '',
+      ktpText: '',
+      ktpTopics: [],
+      selectedKtpTopic: null,
       topicFormulation: '',
+      topicObject: '',
+      topicSubject: '',
       relevance: '',
       novelty: '',
+      hypothesis: '',
       goal: '',
       objectives: [],
       keywords: [],
       chapters: [],
+      methods: [],
+      expectedResult: '',
       literature: [],
       loadingKtp: false,
       loadingFormulation: false,
@@ -82,20 +92,25 @@ export const useAppStore = create<AppState>()(
       loadingLiterature: false,
 
       setTheme: (theme) => set({ theme }),
-      setKtpText: (ktpText) => set({ ktpText }),
-      setKtpTopics: (ktpTopics) => set({ ktpTopics }),
-      setSelectedKtpTopic: (selectedKtpTopic) => set({ selectedKtpTopic }),
       setWorkType: (workType) => set({ workType }),
       setLevel: (level) => set({ level }),
       setDirection: (direction) => set({ direction }),
       setSubjectArea: (subjectArea) => set({ subjectArea }),
+      setKtpText: (ktpText) => set({ ktpText }),
+      setKtpTopics: (ktpTopics) => set({ ktpTopics }),
+      setSelectedKtpTopic: (selectedKtpTopic) => set({ selectedKtpTopic }),
       setTopicFormulation: (topicFormulation) => set({ topicFormulation }),
+      setTopicObject: (topicObject) => set({ topicObject }),
+      setTopicSubject: (topicSubject) => set({ topicSubject }),
       setRelevance: (relevance) => set({ relevance }),
       setNovelty: (novelty) => set({ novelty }),
+      setHypothesis: (hypothesis) => set({ hypothesis }),
       setGoal: (goal) => set({ goal }),
       setObjectives: (objectives) => set({ objectives }),
       setKeywords: (keywords) => set({ keywords }),
       setChapters: (chapters) => set({ chapters }),
+      setMethods: (methods) => set({ methods }),
+      setExpectedResult: (expectedResult) => set({ expectedResult }),
       setLiterature: (literature) => set({ literature }),
       setLoadingKtp: (loadingKtp) => set({ loadingKtp }),
       setLoadingFormulation: (loadingFormulation) => set({ loadingFormulation }),
@@ -103,7 +118,7 @@ export const useAppStore = create<AppState>()(
       setLoadingLiterature: (loadingLiterature) => set({ loadingLiterature }),
     }),
     {
-      name: 'rsa-v2',
+      name: 'rsa-v3',
       partialize: (s) => ({ theme: s.theme, workType: s.workType, level: s.level }),
     }
   )

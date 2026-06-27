@@ -9,11 +9,10 @@ async function ai(prompt: string): Promise<string> {
     body: JSON.stringify({
       messages: [{ role: 'user', content: prompt }],
       model: 'openai',
-      seed: 42,
+      seed: Math.floor(Math.random() * 1000),
       private: true,
     }),
   });
-
   if (!res.ok) throw new Error(`Ошибка сервиса AI: HTTP ${res.status}`);
   return res.text();
 }
@@ -25,80 +24,151 @@ function extractJson(text: string): any {
   return JSON.parse(start !== -1 ? cleaned.slice(start) : cleaned);
 }
 
-// ---------- Prompts ----------
+// ---------- Характеристики типов работ ----------
 
-function ktpPrompt(text: string) {
-  return `Ты — ассистент преподавателя. Из текста КТП или рабочей программы извлеки список учебных тем.
+const WORK_INFO: Record<string, { name: string; volume: string; structure: string }> = {
+  article: {
+    name: 'научная статья',
+    volume: '8–15 страниц',
+    structure: 'аннотация, введение, основная часть (2–3 раздела), заключение, список литературы (10–15 источников)',
+  },
+  thesis: {
+    name: 'тезисы доклада',
+    volume: '3–5 страниц',
+    structure: 'краткое введение с постановкой проблемы, 2–3 основных тезиса с аргументацией, вывод, 5–7 источников',
+  },
+  coursework: {
+    name: 'курсовая работа',
+    volume: '25–40 страниц',
+    structure: 'введение, глава 1 — теоретические основы, глава 2 — практический анализ или эксперимент, заключение, список литературы (20–30 источников), приложения',
+  },
+  vkr: {
+    name: 'выпускная квалификационная работа (ВКР)',
+    volume: '50–80 страниц',
+    structure: 'введение, глава 1 — теоретические основы, глава 2 — аналитическая часть, глава 3 — проектная/практическая часть, заключение, список литературы (30–50 источников), приложения',
+  },
+  practical: {
+    name: 'практикоориентированный проект',
+    volume: '20–35 страниц',
+    structure: 'паспорт проекта, обоснование актуальности, цели и задачи, методология, этапы реализации, ожидаемые результаты, список литературы (15–20 источников)',
+  },
+};
 
-Текст:
+const LEVEL_INFO: Record<string, string> = {
+  spo: 'студент СПО (среднее профессиональное образование, 1–4 курс)',
+  vuz: 'студент вуза (высшее образование, бакалавриат или магистратура)',
+};
+
+// ---------- Промпты ----------
+
+function ktpAnalysisPrompt(text: string, workType: string, level: string, direction: string, subjectArea: string) {
+  const wi = WORK_INFO[workType] ?? WORK_INFO.coursework;
+  const lv = LEVEL_INFO[level] ?? LEVEL_INFO.vuz;
+  return `Ты — опытный научный руководитель. Проанализируй учебный материал и предложи научно значимые исследовательские ракурсы.
+
+Учебный материал (КТП / темы уроков / рабочая программа):
 ${text.slice(0, 5000)}
 
-Требования:
-- Только конкретные учебные темы (не разделы, не номера занятий)
-- Каждая тема — отдельная строка
-- Без нумерации, без лишних символов
-- Не более 20 самых содержательных тем
+Параметры студента:
+- Уровень: ${lv}
+- Направление подготовки: ${direction || 'не указано'}
+- Дисциплина: ${subjectArea || 'не указана'}
+- Тип работы: ${wi.name} (${wi.volume})
 
-Выведи только список тем, без пояснений.`;
-}
+Твоя задача: найти 5–8 тем, каждая из которых:
+1. Опирается на реальную проблему или противоречие в данной предметной области
+2. Имеет исследовательский потенциал (можно собрать данные, провести анализ или эксперимент)
+3. Посильна для ${lv} и соответствует объёму ${wi.name}
+4. Актуальна сегодня — связана с современными вызовами, технологиями или социальными запросами
 
-function formulationPrompt(
-  ktp_topic: string, work_type: string, level: string, direction: string, subject_area: string
-) {
-  const WT: Record<string, string> = {
-    article: 'научная статья', thesis: 'тезисы доклада',
-    coursework: 'курсовая работа', vkr: 'ВКР', practical: 'практический проект',
-  };
-  const LV: Record<string, string> = { spo: 'СПО', vuz: 'ВУЗ' };
-  return `Ты — опытный научный руководитель. Сформулируй научную тему на основе учебной темы из КТП.
-
-Исходная тема: «${ktp_topic}»
-Тип работы: ${WT[work_type] ?? work_type}
-Уровень: ${LV[level] ?? level}
-Направление: ${direction}
-Предметная область: ${subject_area}
-
-Ответь строго в формате JSON (без лишнего текста):
+Верни ответ строго в формате JSON:
 {
-  "topic": "Академическая формулировка темы",
-  "relevance": "Актуальность в 3-4 предложениях",
-  "novelty": "Научная новизна в 2-3 предложениях"
+  "topics": [
+    {
+      "title": "Академическая формулировка темы",
+      "angle": "В чём исследовательский ракурс — какую проблему решаем, что изучаем (1–2 предложения)",
+      "why": "Почему тема перспективна и актуальна именно сейчас (1 предложение)"
+    }
+  ]
 }`;
 }
 
-function planPrompt(topic: string, work_type: string, level: string) {
-  const WT: Record<string, string> = {
-    article: 'научная статья', thesis: 'тезисы доклада',
-    coursework: 'курсовая работа', vkr: 'ВКР', practical: 'практический проект',
-  };
-  const LV: Record<string, string> = { spo: 'СПО', vuz: 'ВУЗ' };
-  return `Ты — научный руководитель. Разработай план исследования.
+function formulationPrompt(
+  topic: string, angle: string, workType: string, level: string, direction: string, subjectArea: string
+) {
+  const wi = WORK_INFO[workType] ?? WORK_INFO.coursework;
+  const lv = LEVEL_INFO[level] ?? LEVEL_INFO.vuz;
+  return `Ты — опытный научный руководитель. Разработай полноценное научное обоснование темы.
 
 Тема: «${topic}»
-Тип работы: ${WT[work_type] ?? work_type}
-Уровень: ${LV[level] ?? level}
+Исследовательский ракурс: ${angle}
+Тип работы: ${wi.name} (объём: ${wi.volume})
+Уровень студента: ${lv}
+Направление: ${direction}
+Дисциплина: ${subjectArea}
 
-Ответь строго в формате JSON (без лишнего текста):
+Верни строго в формате JSON:
 {
-  "goal": "Цель — одно предложение начиная с глагола",
-  "objectives": ["Задача 1", "Задача 2", "Задача 3", "Задача 4", "Задача 5"],
-  "keywords": ["слово1", "слово2", "слово3"],
+  "topic": "Уточнённая академическая формулировка темы (объект + предмет исследования)",
+  "object": "Объект исследования — широкая область",
+  "subject": "Предмет исследования — конкретный аспект",
+  "relevance": "Актуальность: 3–4 предложения. Какие современные проблемы или противоречия делают эту тему важной. Конкретные факты, тенденции.",
+  "novelty": "Научная новизна: 2–3 предложения. Что именно нового вносит данная работа. Чем отличается от уже изученного.",
+  "hypothesis": "Гипотеза исследования (для ${wi.name}): предположение, которое будет проверяться"
+}`;
+}
+
+function planPrompt(topic: string, object: string, subject: string, workType: string, level: string) {
+  const wi = WORK_INFO[workType] ?? WORK_INFO.coursework;
+  const lv = LEVEL_INFO[level] ?? LEVEL_INFO.vuz;
+  return `Ты — научный руководитель. Составь подробный план работы как инструкцию для студента.
+
+Тема: «${topic}»
+Объект: ${object}
+Предмет: ${subject}
+Тип работы: ${wi.name}
+Структура: ${wi.structure}
+Объём: ${wi.volume}
+Студент: ${lv}
+
+Верни строго в формате JSON:
+{
+  "goal": "Цель работы — одно предложение, начинается с глагола (Исследовать / Разработать / Проанализировать...)",
+  "objectives": [
+    "Задача 1 — конкретное действие (изучить, проанализировать, разработать...)",
+    "Задача 2",
+    "Задача 3",
+    "Задача 4",
+    "Задача 5"
+  ],
+  "keywords": ["ключевое слово 1", "ключевое слово 2"],
   "chapters": [
-    { "number": 1, "title": "Название главы", "description": "Краткое описание" }
-  ]
+    {
+      "number": 1,
+      "title": "Название раздела/главы",
+      "description": "Что конкретно делать студенту в этом разделе: какие вопросы раскрыть, какие методы использовать, какой результат получить (2–3 предложения)"
+    }
+  ],
+  "methods": ["метод 1", "метод 2", "метод 3"],
+  "expectedResult": "Что должно получиться в итоге — конкретный результат работы"
 }
 
-Задач: 5-7, ключевых слов: 8-12, глав: 4-5.`;
+Задач должно быть 5–7 (по одной на каждую главу + общие). Глав — согласно структуре ${wi.name}. Методов — 3–5.`;
 }
 
-// ---------- KTP ----------
+// ---------- КТП ----------
 
-export async function parseKtp(text: string): Promise<string[]> {
-  const result = await ai(ktpPrompt(text));
-  return result.trim().split('\n').map(l => l.trim()).filter(Boolean).slice(0, 20);
+export async function parseKtp(
+  text: string, workType: string, level: string, direction: string, subjectArea: string
+): Promise<KtpTopic[]> {
+  const result = await ai(ktpAnalysisPrompt(text, workType, level, direction, subjectArea));
+  const data = extractJson(result);
+  return (data.topics ?? []) as KtpTopic[];
 }
 
-export async function parseKtpFile(file: File): Promise<string[]> {
+export async function parseKtpFile(
+  file: File, workType: string, level: string, direction: string, subjectArea: string
+): Promise<KtpTopic[]> {
   let text = '';
   if (file.name.toLowerCase().endsWith('.pdf')) {
     text = await readPdfText(file);
@@ -108,7 +178,7 @@ export async function parseKtpFile(file: File): Promise<string[]> {
     text = await file.text();
   }
   if (!text.trim()) throw new Error('Файл не содержит текста');
-  return parseKtp(text);
+  return parseKtp(text, workType, level, direction, subjectArea);
 }
 
 async function readPdfText(file: File): Promise<string> {
@@ -137,46 +207,59 @@ async function readDocxText(file: File): Promise<string> {
   return xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// ---------- Formulation ----------
+// ---------- Формулировка ----------
 
-export interface FormulationResult { topic: string; relevance: string; novelty: string; }
+export interface KtpTopic { title: string; angle: string; why: string; }
+export interface FormulationResult {
+  topic: string; object: string; subject: string;
+  relevance: string; novelty: string; hypothesis: string;
+}
 
 export async function generateFormulation(
-  ktp_topic: string, work_type: WorkType, level: Level, direction: string, subject_area: string
+  topic: string, angle: string, workType: WorkType, level: Level, direction: string, subjectArea: string
 ): Promise<FormulationResult> {
-  const text = await ai(formulationPrompt(ktp_topic, work_type, level, direction, subject_area));
+  const text = await ai(formulationPrompt(topic, angle, workType, level, direction, subjectArea));
   return extractJson(text) as FormulationResult;
 }
 
-// ---------- Plan ----------
+// ---------- План ----------
 
-export interface PlanResult { goal: string; objectives: string[]; keywords: string[]; chapters: Chapter[]; }
+export interface PlanResult {
+  goal: string; objectives: string[]; keywords: string[];
+  chapters: Chapter[]; methods: string[]; expectedResult: string;
+}
 
-export async function generatePlan(topic: string, work_type: WorkType, level: Level): Promise<PlanResult> {
-  const text = await ai(planPrompt(topic, work_type, level));
+export async function generatePlan(
+  topic: string, object: string, subject: string, workType: WorkType, level: Level
+): Promise<PlanResult> {
+  const text = await ai(planPrompt(topic, object, subject, workType, level));
   return extractJson(text) as PlanResult;
 }
 
-// ---------- Literature ----------
+// ---------- Литература ----------
 
-export async function searchLiterature(topic: string, count = 10): Promise<LiteratureSource[]> {
+export async function searchLiterature(topic: string, keywords: string[], count = 10): Promise<LiteratureSource[]> {
   const results: LiteratureSource[] = [];
+  const query = keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic;
 
   try {
-    const q = encodeURIComponent(topic);
+    const q = encodeURIComponent(query);
     const r = await fetch(
-      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${Math.ceil(count * 0.6)}&fields=title,authors,year,venue,externalIds,openAccessPdf`
+      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${Math.ceil(count * 0.6)}&fields=title,authors,year,venue,externalIds,openAccessPdf,abstract`
     );
     if (r.ok) {
       const d = await r.json();
       for (const p of (d.data ?? [])) {
+        if (!p.title) continue;
+        const doi = p.externalIds?.DOI;
+        const url = p.openAccessPdf?.url ?? (doi ? `https://doi.org/${doi}` : undefined);
         results.push({
-          title: p.title ?? '',
+          title: p.title,
           authors: (p.authors ?? []).map((a: any) => a.name),
           year: p.year,
-          source: p.venue,
-          doi: p.externalIds?.DOI,
-          url: p.openAccessPdf?.url ?? (p.externalIds?.DOI ? `https://doi.org/${p.externalIds.DOI}` : undefined),
+          source: p.venue || undefined,
+          doi,
+          url,
           language: guessLang(p.title),
         });
       }
@@ -186,20 +269,22 @@ export async function searchLiterature(topic: string, count = 10): Promise<Liter
   try {
     const need = count - results.length;
     if (need > 0) {
-      const q = encodeURIComponent(topic);
+      const q = encodeURIComponent(query);
       const r = await fetch(
-        `https://api.openalex.org/works?search=${q}&per-page=${need}&filter=has_doi:true&sort=cited_by_count:desc`
+        `https://api.openalex.org/works?search=${q}&per-page=${need + 3}&filter=has_doi:true&sort=cited_by_count:desc`
       );
       if (r.ok) {
         const d = await r.json();
         for (const w of (d.results ?? [])) {
+          if (!w.title) continue;
+          const doi = w.doi?.replace('https://doi.org/', '');
           results.push({
-            title: w.title ?? '',
+            title: w.title,
             authors: (w.authorships ?? []).slice(0, 5).map((a: any) => a.author?.display_name ?? ''),
             year: w.publication_year,
             source: w.primary_location?.source?.display_name,
-            doi: w.doi?.replace('https://doi.org/', ''),
-            url: w.doi ?? w.open_access?.oa_url,
+            doi,
+            url: w.doi ?? w.open_access?.oa_url ?? undefined,
             language: guessLang(w.title),
           });
         }
@@ -207,7 +292,16 @@ export async function searchLiterature(topic: string, count = 10): Promise<Liter
     }
   } catch { /* ignore */ }
 
-  return results.slice(0, count);
+  // deduplicate by title
+  const seen = new Set<string>();
+  const unique = results.filter(r => {
+    const key = r.title.toLowerCase().slice(0, 60);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return unique.slice(0, count);
 }
 
 function guessLang(title?: string): 'ru' | 'en' | 'unknown' {

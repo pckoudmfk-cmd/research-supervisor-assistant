@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, ArrowRight, Target, ListTodo, Tag, BookOpen } from 'lucide-react';
+import { Wand2, ArrowRight, Target, ListTodo, Tag, BookOpen, FlaskConical, Star, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { generatePlan } from '../utils/api';
 import { Card } from '../components/ui/Card';
@@ -9,23 +10,32 @@ import styles from './PlanPage.module.css';
 export function PlanPage() {
   const navigate = useNavigate();
   const {
-    topicFormulation, workType, level,
+    topicFormulation, topicObject, topicSubject, workType, level,
     goal, setGoal,
     objectives, setObjectives,
     keywords, setKeywords,
     chapters, setChapters,
+    methods, setMethods,
+    expectedResult, setExpectedResult,
     loadingPlan, setLoadingPlan,
   } = useAppStore();
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleGenerate = async () => {
     if (!topicFormulation) return;
+    setError(null);
     setLoadingPlan(true);
     try {
-      const result = await generatePlan(topicFormulation, workType, level);
+      const result = await generatePlan(topicFormulation, topicObject, topicSubject, workType, level);
       setGoal(result.goal);
       setObjectives(result.objectives);
       setKeywords(result.keywords);
       setChapters(result.chapters);
+      setMethods(result.methods);
+      setExpectedResult(result.expectedResult);
+    } catch (e: any) {
+      setError(e?.message || 'Ошибка при генерации плана');
     } finally {
       setLoadingPlan(false);
     }
@@ -47,9 +57,16 @@ export function PlanPage() {
       <div className={styles.pageHeader}>
         <h1 className={styles.title}>План исследования</h1>
         <p className={styles.desc}>
-          AI разработает подробный план: цель, задачи, ключевые слова и структуру глав.
+          AI разработает подробный план как инструкцию для студента: цель, задачи,
+          методы, структуру глав и ожидаемый результат — с учётом типа и объёма работы.
         </p>
       </div>
+
+      {error && (
+        <div className={styles.errorBox}>
+          <AlertCircle size={16} /><span>{error}</span>
+        </div>
+      )}
 
       <Card>
         <div className={styles.topicRow}>
@@ -119,6 +136,32 @@ export function PlanPage() {
               ))}
             </div>
           </Card>
+
+          {methods && methods.length > 0 && (
+            <Card>
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>
+                  <FlaskConical size={16} className={styles.icon} /> Методы исследования
+                </div>
+                <div className={styles.methods}>
+                  {methods.map((m, i) => (
+                    <span key={i} className={styles.method}>{m}</span>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {expectedResult && (
+            <Card>
+              <div className={styles.section}>
+                <div className={styles.sectionTitle}>
+                  <Star size={16} className={styles.icon} /> Ожидаемый результат
+                </div>
+                <p className={styles.expectedText}>{expectedResult}</p>
+              </div>
+            </Card>
+          )}
 
           <Button onClick={() => navigate('/literature')}>
             Далее: поиск литературы <ArrowRight size={16} />

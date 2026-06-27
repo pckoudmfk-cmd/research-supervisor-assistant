@@ -199,7 +199,7 @@ ${'═'.repeat(60)}
         )}
 
         <div className={styles.docFooter}>
-          Исходная тема КТП: «{selectedKtpTopic}»
+          Исходная тема КТП: «{selectedKtpTopic?.title ?? ''}»
         </div>
       </Card>
     </div>
