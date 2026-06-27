@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { WorkType, Level, Theme, Chapter, LiteratureSource } from '../types';
+import type { WorkType, Level, Theme, Difficulty, Chapter, LiteratureSource } from '../types';
 import type { KtpTopic } from '../utils/api';
 
 interface AppState {
   theme: Theme;
   workType: WorkType;
   level: Level;
+  difficulty: Difficulty;
   direction: string;
   subjectArea: string;
 
@@ -38,6 +39,7 @@ interface AppState {
   setTheme: (v: Theme) => void;
   setWorkType: (v: WorkType) => void;
   setLevel: (v: Level) => void;
+  setDifficulty: (v: Difficulty) => void;
   setDirection: (v: string) => void;
   setSubjectArea: (v: string) => void;
   setKtpText: (v: string) => void;
@@ -68,6 +70,7 @@ export const useAppStore = create<AppState>()(
       theme: 'dark',
       workType: 'coursework',
       level: 'vuz',
+      difficulty: 'standard',
       direction: '',
       subjectArea: '',
       ktpText: '',
@@ -94,6 +97,7 @@ export const useAppStore = create<AppState>()(
       setTheme: (theme) => set({ theme }),
       setWorkType: (workType) => set({ workType }),
       setLevel: (level) => set({ level }),
+      setDifficulty: (difficulty) => set({ difficulty }),
       setDirection: (direction) => set({ direction }),
       setSubjectArea: (subjectArea) => set({ subjectArea }),
       setKtpText: (ktpText) => set({ ktpText }),
@@ -118,8 +122,31 @@ export const useAppStore = create<AppState>()(
       setLoadingLiterature: (loadingLiterature) => set({ loadingLiterature }),
     }),
     {
-      name: 'rsa-v3',
-      partialize: (s) => ({ theme: s.theme, workType: s.workType, level: s.level }),
+      name: 'rsa-v4',
+      partialize: (s) => ({
+        theme: s.theme,
+        workType: s.workType,
+        level: s.level,
+        difficulty: s.difficulty,
+        direction: s.direction,
+        subjectArea: s.subjectArea,
+        ktpText: s.ktpText,
+        ktpTopics: s.ktpTopics,
+        selectedKtpTopic: s.selectedKtpTopic,
+        topicFormulation: s.topicFormulation,
+        topicObject: s.topicObject,
+        topicSubject: s.topicSubject,
+        relevance: s.relevance,
+        novelty: s.novelty,
+        hypothesis: s.hypothesis,
+        goal: s.goal,
+        objectives: s.objectives,
+        keywords: s.keywords,
+        chapters: s.chapters,
+        methods: s.methods,
+        expectedResult: s.expectedResult,
+        literature: s.literature,
+      }),
     }
   )
 );

@@ -1,4 +1,4 @@
-import type { WorkType, Level, LiteratureSource, Chapter } from '../types';
+import type { WorkType, Level, Difficulty, LiteratureSource, Chapter } from '../types';
 
 // ---------- Pollinations.ai — бесплатно, без ключей ----------
 
@@ -81,11 +81,18 @@ const LEVEL_INFO: Record<string, string> = {
   vuz: 'студент вуза (высшее образование, бакалавриат или магистратура)',
 };
 
+const DIFFICULTY_INFO: Record<string, { label: string; desc: string }> = {
+  basic:    { label: 'базовый',     desc: 'обзорная работа, преимущественно теория, 1–2 простых метода (анализ литературы, сравнение)' },
+  standard: { label: 'стандартный', desc: 'теория + практический анализ или кейс, 3–4 метода (анкетирование, анализ данных, SWOT и т.п.)' },
+  advanced: { label: 'продвинутый', desc: 'оригинальное исследование: эксперимент, разработка прототипа или собственная методика, 5+ методов' },
+};
+
 // ---------- Промпты ----------
 
-function ktpAnalysisPrompt(text: string, workType: string, level: string, direction: string, subjectArea: string) {
+function ktpAnalysisPrompt(text: string, workType: string, level: string, difficulty: string, direction: string, subjectArea: string) {
   const wi = WORK_INFO[workType] ?? WORK_INFO.coursework;
   const lv = LEVEL_INFO[level] ?? LEVEL_INFO.vuz;
+  const df = DIFFICULTY_INFO[difficulty] ?? DIFFICULTY_INFO.standard;
   return `Ты — опытный научный руководитель. Проанализируй учебный материал и предложи научно значимые исследовательские ракурсы.
 
 Учебный материал (КТП / темы уроков / рабочая программа):
@@ -96,6 +103,7 @@ ${text.slice(0, 5000)}
 - Направление подготовки: ${direction || 'не указано'}
 - Дисциплина: ${subjectArea || 'не указана'}
 - Тип работы: ${wi.name} (${wi.volume})
+- Сложность работы: ${df.label} — ${df.desc}
 
 Твоя задача: найти 5–8 тем, каждая из которых:
 1. Опирается на реальную проблему или противоречие в данной предметной области
@@ -116,16 +124,18 @@ ${text.slice(0, 5000)}
 }
 
 function formulationPrompt(
-  topic: string, angle: string, workType: string, level: string, direction: string, subjectArea: string
+  topic: string, angle: string, workType: string, level: string, difficulty: string, direction: string, subjectArea: string
 ) {
   const wi = WORK_INFO[workType] ?? WORK_INFO.coursework;
   const lv = LEVEL_INFO[level] ?? LEVEL_INFO.vuz;
+  const df = DIFFICULTY_INFO[difficulty] ?? DIFFICULTY_INFO.standard;
   return `Ты — опытный научный руководитель. Разработай полноценное научное обоснование темы.
 
 Тема: «${topic}»
 Исследовательский ракурс: ${angle}
 Тип работы: ${wi.name} (объём: ${wi.volume})
 Уровень студента: ${lv}
+Сложность: ${df.label} — ${df.desc}
 Направление: ${direction}
 Дисциплина: ${subjectArea}
 
@@ -140,9 +150,10 @@ function formulationPrompt(
 }`;
 }
 
-function planPrompt(topic: string, object: string, subject: string, workType: string, level: string) {
+function planPrompt(topic: string, object: string, subject: string, workType: string, level: string, difficulty: string) {
   const wi = WORK_INFO[workType] ?? WORK_INFO.coursework;
   const lv = LEVEL_INFO[level] ?? LEVEL_INFO.vuz;
+  const df = DIFFICULTY_INFO[difficulty] ?? DIFFICULTY_INFO.standard;
   return `Ты — научный руководитель. Составь подробный план работы как инструкцию для студента.
 
 Тема: «${topic}»
@@ -152,6 +163,7 @@ function planPrompt(topic: string, object: string, subject: string, workType: st
 Структура: ${wi.structure}
 Объём: ${wi.volume}
 Студент: ${lv}
+Сложность: ${df.label} — ${df.desc}
 
 Верни строго в формате JSON:
 {
@@ -181,15 +193,15 @@ function planPrompt(topic: string, object: string, subject: string, workType: st
 // ---------- КТП ----------
 
 export async function parseKtp(
-  text: string, workType: string, level: string, direction: string, subjectArea: string
+  text: string, workType: string, level: string, difficulty: string, direction: string, subjectArea: string
 ): Promise<KtpTopic[]> {
-  const result = await ai(ktpAnalysisPrompt(text, workType, level, direction, subjectArea));
+  const result = await ai(ktpAnalysisPrompt(text, workType, level, difficulty, direction, subjectArea));
   const data = extractJson(result);
   return (data.topics ?? []) as KtpTopic[];
 }
 
 export async function parseKtpFile(
-  file: File, workType: string, level: string, direction: string, subjectArea: string
+  file: File, workType: string, level: string, difficulty: string, direction: string, subjectArea: string
 ): Promise<KtpTopic[]> {
   let text = '';
   if (file.name.toLowerCase().endsWith('.pdf')) {
@@ -200,7 +212,7 @@ export async function parseKtpFile(
     text = await file.text();
   }
   if (!text.trim()) throw new Error('Файл не содержит текста');
-  return parseKtp(text, workType, level, direction, subjectArea);
+  return parseKtp(text, workType, level, difficulty, direction, subjectArea);
 }
 
 async function readPdfText(file: File): Promise<string> {
@@ -238,9 +250,9 @@ export interface FormulationResult {
 }
 
 export async function generateFormulation(
-  topic: string, angle: string, workType: WorkType, level: Level, direction: string, subjectArea: string
+  topic: string, angle: string, workType: WorkType, level: Level, difficulty: Difficulty, direction: string, subjectArea: string
 ): Promise<FormulationResult> {
-  const text = await ai(formulationPrompt(topic, angle, workType, level, direction, subjectArea));
+  const text = await ai(formulationPrompt(topic, angle, workType, level, difficulty, direction, subjectArea));
   return extractJson(text) as FormulationResult;
 }
 
@@ -252,9 +264,9 @@ export interface PlanResult {
 }
 
 export async function generatePlan(
-  topic: string, object: string, subject: string, workType: WorkType, level: Level
+  topic: string, object: string, subject: string, workType: WorkType, level: Level, difficulty: Difficulty
 ): Promise<PlanResult> {
-  const text = await ai(planPrompt(topic, object, subject, workType, level));
+  const text = await ai(planPrompt(topic, object, subject, workType, level, difficulty));
   return extractJson(text) as PlanResult;
 }
 

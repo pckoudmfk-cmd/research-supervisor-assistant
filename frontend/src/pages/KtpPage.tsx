@@ -8,8 +8,8 @@ import type { KtpTopic } from '../utils/api';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Textarea } from '../components/ui/Textarea';
-import type { WorkType, Level } from '../types';
-import { WORK_TYPE_LABELS, LEVEL_LABELS } from '../types';
+import type { WorkType, Level, Difficulty } from '../types';
+import { WORK_TYPE_LABELS, LEVEL_LABELS, DIFFICULTY_LABELS, DIFFICULTY_DESC } from '../types';
 import styles from './KtpPage.module.css';
 
 const WORK_TYPE_ICONS: Record<WorkType, typeof FileText> = {
@@ -30,6 +30,7 @@ export function KtpPage() {
     loadingKtp, setLoadingKtp,
     workType, setWorkType,
     level, setLevel,
+    difficulty, setDifficulty,
     direction, setDirection,
     subjectArea, setSubjectArea,
   } = useAppStore();
@@ -40,7 +41,7 @@ export function KtpPage() {
     setError(null);
     setLoadingKtp(true);
     try {
-      const topics = await parseKtp(text, workType, level, direction, subjectArea);
+      const topics = await parseKtp(text, workType, level, difficulty, direction, subjectArea);
       setKtpTopics(topics);
     } catch (e: any) {
       setError(e?.message || 'Неизвестная ошибка');
@@ -54,14 +55,14 @@ export function KtpPage() {
     setError(null);
     setLoadingKtp(true);
     try {
-      const topics = await parseKtpFile(files[0], workType, level, direction, subjectArea);
+      const topics = await parseKtpFile(files[0], workType, level, difficulty, direction, subjectArea);
       setKtpTopics(topics);
     } catch (e: any) {
       setError(e?.message || 'Неизвестная ошибка');
     } finally {
       setLoadingKtp(false);
     }
-  }, [workType, level, direction, subjectArea]);
+  }, [workType, level, difficulty, direction, subjectArea]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -146,6 +147,21 @@ export function KtpPage() {
               value={subjectArea}
               onChange={(e) => setSubjectArea(e.target.value)}
             />
+          </div>
+        </div>
+        <div className={styles.difficultyRow}>
+          <label className={styles.fieldLabel}>Степень сложности исследования</label>
+          <div className={styles.difficultyButtons}>
+            {(['basic', 'standard', 'advanced'] as Difficulty[]).map((d) => (
+              <button
+                key={d}
+                className={`${styles.difficultyBtn} ${difficulty === d ? styles.difficultyActive : ''}`}
+                onClick={() => setDifficulty(d)}
+              >
+                <span className={styles.difficultyLabel}>{DIFFICULTY_LABELS[d]}</span>
+                <span className={styles.difficultyDesc}>{DIFFICULTY_DESC[d]}</span>
+              </button>
+            ))}
           </div>
         </div>
       </Card>

@@ -65,6 +65,23 @@
 .input:focus { border-color: var(--accent); }
 .input::placeholder { color: var(--text-muted); }
 
+/* Difficulty */
+.difficultyRow { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.difficultyButtons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.difficultyBtn {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 14px; text-align: left;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer; transition: all 0.15s;
+}
+.difficultyBtn:hover { border-color: var(--accent); }
+.difficultyActive { border-color: var(--accent) !important; background: var(--accent-light) !important; }
+.difficultyLabel { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.difficultyActive .difficultyLabel { color: var(--accent); }
+.difficultyDesc { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+
 /* KTP grid */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .btn { margin-top: 14px; }

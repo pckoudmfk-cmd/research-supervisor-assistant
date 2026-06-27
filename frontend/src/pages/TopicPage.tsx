@@ -42,7 +42,7 @@ export function TopicPage() {
   const navigate = useNavigate();
   const {
     selectedKtpTopic,
-    workType, level, direction, subjectArea,
+    workType, level, difficulty, direction, subjectArea,
     topicFormulation, setTopicFormulation,
     topicObject, setTopicObject,
     topicSubject, setTopicSubject,
@@ -61,7 +61,7 @@ export function TopicPage() {
     try {
       const result = await generateFormulation(
         selectedKtpTopic.title, selectedKtpTopic.angle,
-        workType, level, direction, subjectArea
+        workType, level, difficulty, direction, subjectArea
       );
       setTopicFormulation(result.topic);
       setTopicObject(result.object);
