@@ -18,9 +18,9 @@ function formatGost(s: { title: string; authors: string[]; year?: number; source
 export function SummaryPage() {
   const navigate = useNavigate();
   const {
-    selectedKtpTopic, topicFormulation, relevance, novelty,
+    selectedKtpTopic, topicFormulation, topicObject, topicSubject, relevance, novelty, hypothesis,
     workType, level, direction, subjectArea,
-    goal, objectives, keywords, chapters, literature,
+    goal, objectives, keywords, chapters, methods, expectedResult, literature,
   } = useAppStore();
   const [copied, setCopied] = useState(false);
 
@@ -48,6 +48,8 @@ ${'─'.repeat(60)}
 ТЕМА ИССЛЕДОВАНИЯ
 ${'─'.repeat(60)}
 ${topicFormulation}
+${topicObject ? `\nОБЪЕКТ ИССЛЕДОВАНИЯ: ${topicObject}` : ''}
+${topicSubject ? `ПРЕДМЕТ ИССЛЕДОВАНИЯ: ${topicSubject}` : ''}
 
 ${'─'.repeat(60)}
 АКТУАЛЬНОСТЬ
@@ -58,6 +60,7 @@ ${'─'.repeat(60)}
 НАУЧНАЯ НОВИЗНА
 ${'─'.repeat(60)}
 ${novelty}
+${hypothesis ? `\n${'─'.repeat(60)}\nГИПОТЕЗА ИССЛЕДОВАНИЯ\n${'─'.repeat(60)}\n${hypothesis}` : ''}
 
 ${'─'.repeat(60)}
 ЦЕЛЬ ИССЛЕДОВАНИЯ
@@ -79,13 +82,16 @@ ${'─'.repeat(60)}
 ${'─'.repeat(60)}
 ${chapters.map((ch) => `Глава ${ch.number}. ${ch.title}\n   ${ch.description}`).join('\n\n')}
 
+${methods && methods.length > 0 ? `${'─'.repeat(60)}\nМЕТОДЫ ИССЛЕДОВАНИЯ\n${'─'.repeat(60)}\n${methods.join(', ')}` : ''}
+${expectedResult ? `\n${'─'.repeat(60)}\nОЖИДАЕМЫЙ РЕЗУЛЬТАТ\n${'─'.repeat(60)}\n${expectedResult}` : ''}
+
 ${literature.length > 0 ? `${'─'.repeat(60)}
 СПИСОК ЛИТЕРАТУРЫ
 ${'─'.repeat(60)}
 ${literature.map((s, i) => formatGost(s, i + 1)).join('\n')}` : ''}
 
 ${'═'.repeat(60)}
-Исходная тема КТП: «${selectedKtpTopic}»
+Исходная тема КТП: «${selectedKtpTopic?.title ?? ''}»
 `;
 
   const handleCopy = () => {
@@ -134,6 +140,12 @@ ${'═'.repeat(60)}
         <div className={styles.docSection}>
           <div className={styles.secLabel}>Тема исследования</div>
           <div className={styles.secTitle}>«{topicFormulation}»</div>
+          {(topicObject || topicSubject) && (
+            <div className={styles.objSubj}>
+              {topicObject && <span><b>Объект:</b> {topicObject}</span>}
+              {topicSubject && <span><b>Предмет:</b> {topicSubject}</span>}
+            </div>
+          )}
         </div>
 
         {relevance && (
@@ -147,6 +159,13 @@ ${'═'.repeat(60)}
           <div className={styles.docSection}>
             <div className={styles.secLabel}>Научная новизна</div>
             <p className={styles.secText}>{novelty}</p>
+          </div>
+        )}
+
+        {hypothesis && (
+          <div className={styles.docSection}>
+            <div className={styles.secLabel}>Гипотеза исследования</div>
+            <p className={styles.secText}>{hypothesis}</p>
           </div>
         )}
 
@@ -184,6 +203,22 @@ ${'═'.repeat(60)}
                 <span>{ch.description}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {methods && methods.length > 0 && (
+          <div className={styles.docSection}>
+            <div className={styles.secLabel}>Методы исследования</div>
+            <div className={styles.keywords}>
+              {methods.map((m, i) => <span key={i} className={styles.kw}>{m}</span>)}
+            </div>
+          </div>
+        )}
+
+        {expectedResult && (
+          <div className={styles.docSection}>
+            <div className={styles.secLabel}>Ожидаемый результат</div>
+            <p className={styles.secText}>{expectedResult}</p>
           </div>
         )}
 
