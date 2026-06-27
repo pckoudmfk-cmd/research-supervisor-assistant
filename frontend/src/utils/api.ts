@@ -273,18 +273,43 @@ async function translateToEnglish(text: string): Promise<string> {
 
 export async function searchLiterature(topic: string, keywords: string[], count = 10): Promise<LiteratureSource[]> {
   const results: LiteratureSource[] = [];
-
-  // Translate to English for better search results in international databases
   const ruQuery = keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic;
-  const enQuery = await translateToEnglish(ruQuery);
-  const query = enQuery || ruQuery;
+  const errors: string[] = [];
 
-  let lastError = '';
-
+  // 1. КиберЛенинка — русскоязычные статьи в открытом доступе
   try {
-    const q = encodeURIComponent(query);
+    const r = await fetch('https://cyberleninka.ru/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: ruQuery, size: Math.ceil(count * 0.5), from: 0 }),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      for (const a of (d.articles ?? [])) {
+        if (!a.name) continue;
+        const slug = a.id ?? '';
+        results.push({
+          title: a.name,
+          authors: a.authorNames ? a.authorNames.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+          year: a.publishedYear ?? undefined,
+          source: a.journalName ?? undefined,
+          doi: undefined,
+          url: slug ? `https://cyberleninka.ru/article/n/${slug}` : undefined,
+          language: 'ru',
+        });
+      }
+    } else {
+      errors.push(`КиберЛенинка: HTTP ${r.status}`);
+    }
+  } catch (e: any) { errors.push(`КиберЛенинка: ${e?.message ?? 'недоступна'}`); }
+
+  // 2. Semantic Scholar — международные статьи (запрос на английском)
+  try {
+    const enQuery = await translateToEnglish(ruQuery);
+    const q = encodeURIComponent(enQuery || ruQuery);
+    const need = Math.ceil(count * 0.35);
     const r = await fetch(
-      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${Math.ceil(count * 0.6)}&fields=title,authors,year,venue,externalIds,openAccessPdf`
+      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${need}&fields=title,authors,year,venue,externalIds,openAccessPdf`
     );
     if (r.ok) {
       const d = await r.json();
@@ -303,14 +328,16 @@ export async function searchLiterature(topic: string, keywords: string[], count 
         });
       }
     } else {
-      lastError = `Semantic Scholar: HTTP ${r.status}`;
+      errors.push(`Semantic Scholar: HTTP ${r.status}`);
     }
-  } catch (e: any) { lastError = e?.message ?? 'Semantic Scholar недоступен'; }
+  } catch (e: any) { errors.push(`Semantic Scholar: ${e?.message ?? 'недоступен'}`); }
 
+  // 3. OpenAlex — дополнение до нужного количества
   try {
     const need = count - results.length;
     if (need > 0) {
-      const q = encodeURIComponent(query);
+      const enQuery = await translateToEnglish(ruQuery);
+      const q = encodeURIComponent(enQuery || ruQuery);
       const r = await fetch(
         `https://api.openalex.org/works?search=${q}&per-page=${need + 3}&filter=has_doi:true&sort=cited_by_count:desc`
       );
@@ -330,15 +357,15 @@ export async function searchLiterature(topic: string, keywords: string[], count 
           });
         }
       } else {
-        lastError = lastError || `OpenAlex: HTTP ${r.status}`;
+        errors.push(`OpenAlex: HTTP ${r.status}`);
       }
     }
-  } catch (e: any) { lastError = lastError || (e as any)?.message || 'OpenAlex недоступен'; }
+  } catch (e: any) { errors.push(`OpenAlex: ${e?.message ?? 'недоступен'}`); }
 
   if (results.length === 0) {
     throw new Error(
-      lastError
-        ? `Не удалось получить источники: ${lastError}`
+      errors.length
+        ? `Не удалось получить источники: ${errors.join('; ')}`
         : 'Источники не найдены. Попробуйте уточнить тему или ключевые слова.'
     );
   }
