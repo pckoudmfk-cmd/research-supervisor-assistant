@@ -1,34 +1,33 @@
 import type { WorkType, Level, LiteratureSource, Chapter } from '../types';
 
-// ---------- Gemini direct call ----------
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL = 'llama-3.3-70b-versatile';
 
-async function gemini(prompt: string, jsonMode = false): Promise<string> {
-  const key = localStorage.getItem('gemini-api-key') ?? '';
+// ---------- Groq call ----------
+
+async function ai(prompt: string): Promise<string> {
+  const key = localStorage.getItem('groq-api-key') ?? '';
   if (!key) throw new Error('API_KEY_MISSING');
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: jsonMode ? 0.3 : 0.7,
-          maxOutputTokens: 3000,
-          ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
-        },
-      }),
-    }
-  );
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.5,
+      max_tokens: 3000,
+    }),
+  });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? `HTTP ${res.status}`);
+    const msg = err?.error?.message ?? `HTTP ${res.status}`;
+    throw new Error(msg);
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  return data.choices?.[0]?.message?.content ?? '';
 }
 
 function extractJson(text: string): any {
@@ -71,7 +70,7 @@ function formulationPrompt(
 Направление: ${direction}
 Предметная область: ${subject_area}
 
-Ответь строго в формате JSON:
+Ответь строго в формате JSON (без лишнего текста):
 {
   "topic": "Академическая формулировка темы",
   "relevance": "Актуальность в 3-4 предложениях",
@@ -91,7 +90,7 @@ function planPrompt(topic: string, work_type: string, level: string) {
 Тип работы: ${WT[work_type] ?? work_type}
 Уровень: ${LV[level] ?? level}
 
-Ответь строго в формате JSON:
+Ответь строго в формате JSON (без лишнего текста):
 {
   "goal": "Цель — одно предложение начиная с глагола",
   "objectives": ["Задача 1", "Задача 2", "Задача 3", "Задача 4", "Задача 5"],
@@ -107,53 +106,47 @@ function planPrompt(topic: string, work_type: string, level: string) {
 // ---------- KTP ----------
 
 export async function parseKtp(text: string): Promise<string[]> {
-  const result = await gemini(ktpPrompt(text));
+  const result = await ai(ktpPrompt(text));
   return result.trim().split('\n').map(l => l.trim()).filter(Boolean).slice(0, 20);
 }
 
 export async function parseKtpFile(file: File): Promise<string[]> {
-  const key = localStorage.getItem('gemini-api-key') ?? '';
+  const key = localStorage.getItem('groq-api-key') ?? '';
   if (!key) throw new Error('API_KEY_MISSING');
 
+  let text = '';
+
   if (file.name.toLowerCase().endsWith('.pdf')) {
-    const buf = await file.arrayBuffer();
-    const bytes = new Uint8Array(buf);
-    let b64 = '';
-    for (let i = 0; i < bytes.length; i++) b64 += String.fromCharCode(bytes[i]);
-    const b64Str = btoa(b64);
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inline_data: { mime_type: 'application/pdf', data: b64Str } },
-              { text: 'Из этого КТП или рабочей программы извлеки список учебных тем. Каждая тема — отдельная строка. Без нумерации и лишних символов. Не более 20 тем. Выведи только список.' },
-            ],
-          }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
-        }),
-      }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message ?? `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    const result = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-    return result.trim().split('\n').map((l: string) => l.trim()).filter(Boolean).slice(0, 20);
+    text = await readPdfText(file);
+  } else if (file.name.toLowerCase().endsWith('.docx')) {
+    text = await readDocxText(file);
+  } else {
+    text = await file.text();
   }
 
-  if (file.name.toLowerCase().endsWith('.docx')) {
-    const text = await readDocxText(file);
-    return parseKtp(text);
-  }
-
-  const text = await file.text();
+  if (!text.trim()) throw new Error('Файл не содержит текста');
   return parseKtp(text);
+}
+
+async function readPdfText(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  // Extract text from PDF using basic byte scanning for ASCII/UTF-8 text streams
+  const bytes = new Uint8Array(buf);
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const raw = decoder.decode(bytes);
+  // Extract text between BT and ET markers (PDF text objects)
+  const chunks: string[] = [];
+  const btEt = raw.match(/BT[\s\S]*?ET/g) ?? [];
+  for (const block of btEt) {
+    const strings = block.match(/\(([^)]*)\)/g) ?? [];
+    for (const s of strings) {
+      const content = s.slice(1, -1).replace(/\\n/g, '\n').replace(/\\r/g, '').replace(/\\\(/g, '(').replace(/\\\)/g, ')');
+      if (content.trim()) chunks.push(content);
+    }
+  }
+  const extracted = chunks.join(' ');
+  // Fallback: try raw text if extraction yielded nothing
+  return extracted.length > 50 ? extracted : raw.replace(/[^\x20-\x7EЀ-ӿ\n]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 async function readDocxText(file: File): Promise<string> {
@@ -171,7 +164,7 @@ export interface FormulationResult { topic: string; relevance: string; novelty: 
 export async function generateFormulation(
   ktp_topic: string, work_type: WorkType, level: Level, direction: string, subject_area: string
 ): Promise<FormulationResult> {
-  const text = await gemini(formulationPrompt(ktp_topic, work_type, level, direction, subject_area), true);
+  const text = await ai(formulationPrompt(ktp_topic, work_type, level, direction, subject_area));
   return extractJson(text) as FormulationResult;
 }
 
@@ -180,7 +173,7 @@ export async function generateFormulation(
 export interface PlanResult { goal: string; objectives: string[]; keywords: string[]; chapters: Chapter[]; }
 
 export async function generatePlan(topic: string, work_type: WorkType, level: Level): Promise<PlanResult> {
-  const text = await gemini(planPrompt(topic, work_type, level), true);
+  const text = await ai(planPrompt(topic, work_type, level), );
   return extractJson(text) as PlanResult;
 }
 

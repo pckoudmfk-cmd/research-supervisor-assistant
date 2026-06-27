@@ -14,11 +14,11 @@ export function Header() {
   const { theme, setTheme } = useAppStore();
   const [showKey, setShowKey] = useState(false);
   const [keyInput, setKeyInput] = useState('');
-  const hasKey = !!localStorage.getItem('gemini-api-key');
+  const hasKey = !!localStorage.getItem('groq-api-key');
 
   const saveKey = () => {
     if (keyInput.trim()) {
-      localStorage.setItem('gemini-api-key', keyInput.trim());
+      localStorage.setItem('groq-api-key', keyInput.trim());
       setKeyInput('');
       setShowKey(false);
       window.location.reload();
@@ -26,7 +26,7 @@ export function Header() {
   };
 
   const clearKey = () => {
-    localStorage.removeItem('gemini-api-key');
+    localStorage.removeItem('groq-api-key');
     window.location.reload();
   };
 
