@@ -45,8 +45,8 @@ export function KtpPage() {
       const topics = await parseKtpFile(files[0]);
       setKtpTopics(topics);
     } catch (e: any) {
-      const msg = e?.response?.data?.detail || e?.message || 'Неизвестная ошибка';
-      setError(`Ошибка загрузки файла: ${msg}`);
+      const msg = e?.message || 'Неизвестная ошибка';
+      setError(msg === 'API_KEY_MISSING' ? 'Введите Gemini API ключ (см. баннер выше)' : `Ошибка загрузки файла: ${msg}`);
     } finally {
       setLoadingKtp(false);
     }
@@ -70,8 +70,8 @@ export function KtpPage() {
       const topics = await parseKtp(ktpText);
       setKtpTopics(topics);
     } catch (e: any) {
-      const msg = e?.response?.data?.detail || e?.message || 'Неизвестная ошибка';
-      setError(`Ошибка извлечения тем: ${msg}`);
+      const msg = e?.message || 'Неизвестная ошибка';
+      setError(msg === 'API_KEY_MISSING' ? 'Введите Gemini API ключ (см. баннер выше)' : `Ошибка извлечения тем: ${msg}`);
     } finally {
       setLoadingKtp(false);
     }

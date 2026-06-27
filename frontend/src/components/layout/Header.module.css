@@ -19,7 +19,21 @@
 .logo { font-size: 30px; }
 .title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
 .subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.right { display: flex; align-items: center; gap: 8px; }
 .themes { display: flex; gap: 6px; }
+.keyRow { display: flex; align-items: center; gap: 6px; }
+.keyInput {
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  width: 200px;
+  font-family: monospace;
+}
+.keyActive { background: rgba(61,142,248,0.15) !important; border-color: var(--accent) !important; color: var(--accent) !important; }
 .themeBtn {
   width: 36px; height: 36px;
   border: 1px solid var(--border);

@@ -1,0 +1,31 @@
+.banner {
+  display: flex;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--glow, none);
+}
+.icon { color: var(--accent); flex-shrink: 0; padding-top: 2px; }
+.content { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.link { color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+.link:hover { text-decoration: underline; }
+.row { display: flex; gap: 8px; align-items: center; }
+.input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: monospace;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text-muted); font-family: inherit; }
+.note { font-size: 11px; color: var(--text-muted); }
