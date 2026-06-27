@@ -10,7 +10,7 @@ import styles from './PlanPage.module.css';
 export function PlanPage() {
   const navigate = useNavigate();
   const {
-    topicFormulation, topicObject, topicSubject, workType, level, difficulty,
+    topicFormulation, topicObject, topicSubject, workType, level, difficulty, direction, subjectArea,
     goal, setGoal,
     objectives, setObjectives,
     keywords, setKeywords,
@@ -27,7 +27,7 @@ export function PlanPage() {
     setError(null);
     setLoadingPlan(true);
     try {
-      const result = await generatePlan(topicFormulation, topicObject, topicSubject, workType, level, difficulty);
+      const result = await generatePlan(topicFormulation, topicObject, topicSubject, workType, level, difficulty, direction, subjectArea);
       setGoal(result.goal);
       setObjectives(result.objectives);
       setKeywords(result.keywords);
