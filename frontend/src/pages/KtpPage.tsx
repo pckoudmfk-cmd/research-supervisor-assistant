@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { AlertCircle } from 'lucide-react';
 import { Upload, Wand2, ArrowRight, CheckCircle2, FileText, BookOpen, GraduationCap, Briefcase, Newspaper } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
@@ -34,12 +35,18 @@ export function KtpPage() {
     subjectArea, setSubjectArea,
   } = useAppStore();
 
+  const [error, setError] = useState<string | null>(null);
+
   const onDrop = useCallback(async (files: File[]) => {
     if (!files[0]) return;
+    setError(null);
     setLoadingKtp(true);
     try {
       const topics = await parseKtpFile(files[0]);
       setKtpTopics(topics);
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || e?.message || 'Неизвестная ошибка';
+      setError(`Ошибка загрузки файла: ${msg}`);
     } finally {
       setLoadingKtp(false);
     }
@@ -57,10 +64,14 @@ export function KtpPage() {
 
   const handleParse = async () => {
     if (!ktpText.trim()) return;
+    setError(null);
     setLoadingKtp(true);
     try {
       const topics = await parseKtp(ktpText);
       setKtpTopics(topics);
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || e?.message || 'Неизвестная ошибка';
+      setError(`Ошибка извлечения тем: ${msg}`);
     } finally {
       setLoadingKtp(false);
     }
@@ -75,6 +86,13 @@ export function KtpPage() {
           AI извлечёт учебные темы и предложит их для дальнейшей научной работы.
         </p>
       </div>
+
+      {error && (
+        <div className={styles.errorBox}>
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Тип работы */}
       <Card title="Тип научной работы" subtitle="Выберите вид разрабатываемого документа">

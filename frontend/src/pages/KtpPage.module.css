@@ -1,4 +1,14 @@
 .page { display: flex; flex-direction: column; gap: 20px; }
+.errorBox {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 14px 16px;
+  background: rgba(239,68,68,0.1);
+  border: 1.5px solid rgba(239,68,68,0.4);
+  border-radius: var(--radius);
+  color: #f87171;
+  font-size: 14px;
+  line-height: 1.5;
+}
 .pageHeader { margin-bottom: 4px; }
 .title { font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em; }
 .desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 680px; }
