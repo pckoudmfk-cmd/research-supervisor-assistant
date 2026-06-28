@@ -43,3 +43,5 @@
   color: var(--text-muted);
 }
 .active .badge { background: rgba(255,255,255,0.25); color: #fff; border-color: transparent; }
+.divider { height: 1px; background: var(--border); margin: 10px 4px; }
+

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FileText, Lightbulb, ClipboardList, BookMarked, FileOutput } from 'lucide-react';
+import { FileText, Lightbulb, ClipboardList, BookMarked, FileOutput, BookOpenText } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 const NAV = [
@@ -26,6 +26,16 @@ export function Sidebar() {
           <span>{label}</span>
         </NavLink>
       ))}
+      <div className={styles.divider} />
+      <div className={styles.label}>Материалы</div>
+      <NavLink
+        to="/guide"
+        className={({ isActive }) => `${styles.item} ${isActive ? styles.active : ''}`}
+      >
+        <span className={styles.badge}><BookOpenText size={12} /></span>
+        <BookOpenText size={16} />
+        <span>Гид по статье</span>
+      </NavLink>
     </nav>
   );
 }

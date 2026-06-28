@@ -1,0 +1,129 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.pageHeader { margin-bottom: 4px; }
+.title { font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.02em; }
+.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 680px; }
+
+/* IMRAD grid */
+.imradGrid {
+  display: flex; gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.imradItem {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 18px 10px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+.imradItem:last-child { border-right: none; }
+.imradLetter { font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; }
+.imradLabel { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.imradRu { font-size: 11px; color: var(--text-secondary); }
+.note { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+/* Sections list */
+.sections { display: flex; flex-direction: column; gap: 8px; }
+.section {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.sectionHeader {
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background 0.15s;
+}
+.sectionHeader:hover { background: var(--bg-hover); }
+.sectionNum {
+  width: 26px; height: 26px;
+  background: var(--accent-light);
+  border: 1.5px solid var(--accent);
+  border-radius: 7px;
+  font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); flex-shrink: 0;
+}
+.sectionIcon { color: var(--accent); flex-shrink: 0; }
+.sectionTitle { flex: 1; font-size: 15px; font-weight: 600; }
+.chevron { color: var(--text-muted); }
+.sectionBody { padding: 0 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Text and boxes */
+.text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+.ruleBox {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 14px; color: var(--text-primary);
+}
+.ruleList { margin: 8px 0 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+.ruleList li { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.tip {
+  font-size: 13px; color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  line-height: 1.6;
+}
+.warning {
+  font-size: 13px;
+  color: var(--warning);
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+/* Table */
+.tableWrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th {
+  padding: 10px 14px; text-align: left;
+  background: var(--bg-secondary);
+  color: var(--text-secondary); font-weight: 700;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+.table td { padding: 10px 14px; color: var(--text-secondary); border-bottom: 1px solid var(--border); line-height: 1.5; }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--bg-hover); }
+
+/* Prompt block */
+.promptBlock {
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  position: relative;
+}
+.promptLabel {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--accent); margin-bottom: 8px;
+}
+.promptText {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+  white-space: pre-wrap; margin: 0; padding-right: 90px;
+}
+.copyBtn {
+  position: absolute; top: 12px; right: 12px;
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
+}
+.copyBtn:hover { border-color: var(--accent); color: var(--accent); }

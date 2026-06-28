@@ -7,6 +7,7 @@ import { TopicPage } from './pages/TopicPage';
 import { PlanPage } from './pages/PlanPage';
 import { LiteraturePage } from './pages/LiteraturePage';
 import { SummaryPage } from './pages/SummaryPage';
+import { GuidePage } from './pages/GuidePage';
 
 export default function App() {
   const theme = useAppStore((s) => s.theme);
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/plan" element={<PlanPage />} />
           <Route path="/literature" element={<LiteraturePage />} />
           <Route path="/summary" element={<SummaryPage />} />
+          <Route path="/guide" element={<GuidePage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
