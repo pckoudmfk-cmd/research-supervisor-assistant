@@ -34,11 +34,11 @@ export function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <span className={styles.logo}>📚</span>
-          <div>
-            <div className={styles.title}>Помощник научного руководителя</div>
-            <div className={styles.subtitle}>Цифровой ассистент для работ СПО и ВУЗ</div>
-          </div>
+          <img
+            src="/research-supervisor-assistant/logo.jpg"
+            alt="VS Production"
+            className={styles.logoImg}
+          />
         </div>
         <div className={styles.right}>
           {showKey ? (

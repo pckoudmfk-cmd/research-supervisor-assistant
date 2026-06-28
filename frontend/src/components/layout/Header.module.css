@@ -15,10 +15,13 @@
   align-items: center;
   justify-content: space-between;
 }
-.brand { display: flex; align-items: center; gap: 14px; }
-.logo { font-size: 30px; }
-.title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
-.subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.brand { display: flex; align-items: center; }
+.logoImg {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
 .right { display: flex; align-items: center; gap: 8px; }
 .themes { display: flex; gap: 6px; }
 .keyRow { display: flex; align-items: center; gap: 6px; }
@@ -49,10 +52,7 @@
 
 @media (max-width: 700px) {
   .inner { padding: 0 14px; height: 56px; }
-  .subtitle { display: none; }
-  .logo { font-size: 24px; }
-  .title { font-size: 13px; }
-  .brand { gap: 10px; }
+  .logoImg { height: 40px; }
   .themeBtn { width: 32px; height: 32px; }
   .keyInput { width: 130px; }
 }
