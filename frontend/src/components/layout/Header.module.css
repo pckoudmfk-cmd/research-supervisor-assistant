@@ -46,3 +46,13 @@
 }
 .themeBtn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent); }
 .themeBtn.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--glow, none); }
+
+@media (max-width: 700px) {
+  .inner { padding: 0 14px; height: 56px; }
+  .subtitle { display: none; }
+  .logo { font-size: 24px; }
+  .title { font-size: 13px; }
+  .brand { gap: 10px; }
+  .themeBtn { width: 32px; height: 32px; }
+  .keyInput { width: 130px; }
+}

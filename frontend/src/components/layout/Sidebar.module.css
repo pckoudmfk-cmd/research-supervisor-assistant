@@ -8,6 +8,39 @@
   border-right: 1px solid var(--border);
   background: var(--bg-card);
 }
+
+@media (max-width: 700px) {
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding: 8px 10px;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .label { display: none; }
+  .divider { display: none; }
+  .item {
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    font-size: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border-radius: 10px;
+    min-width: 64px;
+    align-items: center;
+  }
+  .badge { display: none; }
+}
 .label {
   font-size: 10px;
   font-weight: 700;

@@ -127,3 +127,5 @@
   cursor: pointer; transition: all 0.15s;
 }
 .copyBtn:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 700px) { .imradGrid { flex-wrap: wrap; } .imradItem { min-width: calc(33% - 1px); } .promptText { padding-right: 0; padding-bottom: 40px; } .copyBtn { position: static; margin-top: 8px; } }

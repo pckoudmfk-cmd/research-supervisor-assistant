@@ -11,3 +11,8 @@
   overflow-y: auto;
   min-width: 0;
 }
+
+@media (max-width: 700px) {
+  .body { flex-direction: column; }
+  .main { padding: 16px 14px 90px; }
+}
