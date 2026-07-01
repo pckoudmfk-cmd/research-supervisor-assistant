@@ -4,22 +4,19 @@ import type { WorkType, Level, Difficulty, LiteratureSource, Chapter } from '../
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-async function aiGroq(prompt: string, apiKey: string): Promise<string> {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+async function aiOpenAICompat(prompt: string, baseUrl: string, apiKey: string, model: string): Promise<string> {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 2048,
     }),
   });
   if (res.status === 429) throw Object.assign(new Error('429'), { status: 429 });
-  if (!res.ok) throw new Error(`Groq: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`AI HTTP ${res.status}`);
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? '';
 }
@@ -40,14 +37,22 @@ async function aiPollinations(prompt: string): Promise<string> {
   return res.text();
 }
 
-async function ai(prompt: string, attempt = 0): Promise<string> {
+function getApiConfig(): { baseUrl: string; key: string; model: string } | null {
   const groqKey = localStorage.getItem('groq-api-key');
+  if (groqKey) return { baseUrl: 'https://api.groq.com/openai/v1', key: groqKey, model: 'llama-3.3-70b-versatile' };
+  const orKey = localStorage.getItem('openrouter-api-key');
+  if (orKey) return { baseUrl: 'https://openrouter.ai/api/v1', key: orKey, model: 'meta-llama/llama-3.3-70b-instruct:free' };
+  return null;
+}
+
+async function ai(prompt: string, attempt = 0): Promise<string> {
+  const cfg = getApiConfig();
   try {
-    if (groqKey) return await aiGroq(prompt, groqKey);
+    if (cfg) return await aiOpenAICompat(prompt, cfg.baseUrl, cfg.key, cfg.model);
     return await aiPollinations(prompt);
   } catch (e: any) {
     const is429 = e?.status === 429 || e?.message === '429';
-    const isNetwork = e instanceof TypeError; // "Failed to fetch"
+    const isNetwork = e instanceof TypeError;
     if ((is429 || isNetwork) && attempt < 4) {
       const delay = [3000, 6000, 12000, 24000][attempt];
       await sleep(delay);
