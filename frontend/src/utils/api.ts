@@ -455,16 +455,31 @@ async function generateAiLiterature(topic: string, keywords: string[], count: nu
 }
 
 export async function searchLiterature(topic: string, keywords: string[], count = 10): Promise<LiteratureSource[]> {
+  // Используем бэкенд если доступен — он обходит CORS и использует КиберЛенинку
+  if (BACKEND_URL) {
+    try {
+      const r = await fetch(`${BACKEND_URL}/api/literature/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, keywords, count }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        const sources = (data.sources ?? []) as LiteratureSource[];
+        if (sources.length > 0) return sources;
+      }
+    } catch { /* fallback to client-side */ }
+  }
+
+  // Фолбек: клиентский поиск через OpenAlex (поддерживает CORS) + AI
   const results: LiteratureSource[] = [];
   const enQuery = await translateToEnglish(keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic);
 
-  // 1. OpenAlex — поддерживает CORS, бесплатный, открытый
   try {
     const items = await fetchOpenAlex(enQuery, Math.ceil(count * 0.6));
     results.push(...items);
-  } catch { /* fallthrough to AI */ }
+  } catch { /* fallthrough */ }
 
-  // 2. AI-генерация — русскоязычные + дополнение если OpenAlex вернул мало
   const need = count - results.length;
   if (need > 0) {
     try {
@@ -477,7 +492,6 @@ export async function searchLiterature(topic: string, keywords: string[], count 
     throw new Error('Источники не найдены. Проверьте подключение к интернету и попробуйте снова.');
   }
 
-  // дедупликация по заголовку
   const seen = new Set<string>();
   return results.filter(r => {
     const key = r.title.toLowerCase().slice(0, 60);

@@ -48,6 +48,7 @@ class PlanResponse(BaseModel):
 
 class LiteratureSearchRequest(BaseModel):
     topic: str
+    keywords: list[str] = []
     count: int = 10
 
 

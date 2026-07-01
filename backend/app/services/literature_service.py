@@ -1,5 +1,43 @@
 import httpx
 from app.models.schemas import LiteratureSource
+from app.services.ai_service import generate_text
+
+
+async def translate_to_english(text: str) -> str:
+    try:
+        result = await generate_text(
+            f"Translate to English for academic search. Return only the translation, no explanations:\n\"{text}\""
+        )
+        return result.strip().strip('"\'')
+    except Exception:
+        return text
+
+
+async def search_cyberleninka(query: str, limit: int = 5) -> list[LiteratureSource]:
+    url = "https://cyberleninka.ru/api/search"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(url, json={"q": query, "size": limit, "from": 0})
+            r.raise_for_status()
+            data = r.json()
+    except Exception:
+        return []
+
+    sources = []
+    for a in data.get("articles", []):
+        if not a.get("name"):
+            continue
+        slug = a.get("id", "")
+        sources.append(LiteratureSource(
+            title=a["name"],
+            authors=[s.strip() for s in (a.get("authorNames") or "").split(",") if s.strip()],
+            year=a.get("publishedYear"),
+            source=a.get("journalName") or None,
+            doi=None,
+            url=f"https://cyberleninka.ru/article/n/{slug}" if slug else None,
+            language="ru",
+        ))
+    return sources
 
 
 async def search_semantic_scholar(query: str, limit: int = 5) -> list[LiteratureSource]:
@@ -74,13 +112,20 @@ async def search_openalex(query: str, limit: int = 5) -> list[LiteratureSource]:
 
 
 async def search_literature(topic: str, count: int = 10) -> list[LiteratureSource]:
-    half = max(count // 2, 3)
-    en_results = await search_semantic_scholar(topic, half)
-    ru_results = await search_openalex(topic, half)
+    ru_count = max(count // 2, 3)
+    en_count = max(count // 3, 2)
+
+    en_query = await translate_to_english(topic)
+
+    ru_results = await search_cyberleninka(topic, ru_count)
+    en_results = await search_semantic_scholar(en_query, en_count)
+    extra_results = await search_openalex(en_query, count - len(ru_results) - len(en_results) + 3)
 
     seen: set[str] = set()
     merged: list[LiteratureSource] = []
-    for s in en_results + ru_results:
+    for s in ru_results + en_results + extra_results:
+        if not s.title:
+            continue
         key = s.title.lower()[:60]
         if key not in seen:
             seen.add(key)
