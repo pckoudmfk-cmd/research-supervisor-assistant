@@ -62,22 +62,45 @@ function getApiConfig(): { baseUrl: string; key: string; model: string } | null 
 
 async function ai(prompt: string, attempt = 0): Promise<string> {
   const cfg = getApiConfig();
+
+  // Пользовательский ключ (Groq / OpenRouter)
+  if (cfg) {
+    try {
+      return await aiOpenAICompat(prompt, cfg.baseUrl, cfg.key, cfg.model);
+    } catch (e: any) {
+      const is429 = e?.status === 429 || e?.message === '429';
+      const isNetwork = e instanceof TypeError;
+      if ((is429 || isNetwork) && attempt < 4) {
+        await sleep([3000, 6000, 12000, 24000][attempt]);
+        return ai(prompt, attempt + 1);
+      }
+      if (is429) throw new Error('Сервис AI перегружен — попробуйте через минуту');
+      throw e;
+    }
+  }
+
+  // Бэкенд (Gemini на Vercel)
+  if (BACKEND_URL) {
+    try {
+      return await aiBackend(prompt);
+    } catch (e: any) {
+      const is429 = e?.status === 429 || e?.message === '429';
+      if (is429 && attempt < 4) {
+        await sleep([3000, 6000, 12000, 24000][attempt]);
+        return ai(prompt, attempt + 1);
+      }
+      // Backend вернул 5xx или недоступен — фолбек на Pollinations
+    }
+  }
+
+  // Фолбек: Pollinations (бесплатно, без ключа)
   try {
-    // 1. Бэкенд (Gemini, ключ на Vercel) — приоритет если нет пользовательского ключа
-    if (!cfg) return await aiBackend(prompt);
-    // 2. Пользовательский ключ (Groq / OpenRouter)
-    return await aiOpenAICompat(prompt, cfg.baseUrl, cfg.key, cfg.model);
+    return await aiPollinations(prompt);
   } catch (e: any) {
     const is429 = e?.status === 429 || e?.message === '429';
     const isNetwork = e instanceof TypeError;
-    const isNoBackend = e?.message === 'no backend';
-    // Если бэкенд недоступен — падаем на Pollinations
-    if (isNoBackend || (isNetwork && !cfg)) {
-      try { return await aiPollinations(prompt); } catch { /* ignore */ }
-    }
     if ((is429 || isNetwork) && attempt < 4) {
-      const delay = [3000, 6000, 12000, 24000][attempt];
-      await sleep(delay);
+      await sleep([3000, 6000, 12000, 24000][attempt]);
       return ai(prompt, attempt + 1);
     }
     if (is429) throw new Error('Сервис AI перегружен — попробуйте через минуту');
