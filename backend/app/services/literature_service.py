@@ -5,6 +5,25 @@ from app.models.schemas import LiteratureSource
 TIMEOUT = 7
 
 
+async def translate_ru_en(text: str) -> str:
+    """MyMemory free translation API — no key, ~0.5s, 5000 chars/day."""
+    try:
+        query = text[:500]
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(
+                "https://api.mymemory.translated.net/get",
+                params={"q": query, "langpair": "ru|en"},
+            )
+            r.raise_for_status()
+            data = r.json()
+            translated = data.get("responseData", {}).get("translatedText", "")
+            if translated and translated.lower() != query.lower():
+                return translated
+    except Exception:
+        pass
+    return text
+
+
 async def search_cyberleninka(query: str, limit: int = 5) -> list[LiteratureSource]:
     url = "https://cyberleninka.ru/api/search"
     try:
@@ -235,16 +254,28 @@ async def search_europepmc(query: str, limit: int = 5) -> list[LiteratureSource]
 async def search_literature(topic: str, count: int = 10) -> list[LiteratureSource]:
     per_source = max(count // 3, 3)
 
-    # все 6 источников параллельно
-    results = await asyncio.gather(
+    # КиберЛенинка (русский) + перевод — параллельно
+    ru_results, en_query = await asyncio.gather(
         search_cyberleninka(topic, per_source),
-        search_semantic_scholar(topic, per_source),
-        search_openalex(topic, per_source),
-        search_crossref(topic, per_source),
-        search_arxiv(topic, per_source),
-        search_europepmc(topic, per_source),
+        translate_ru_en(topic),
         return_exceptions=True,
     )
+    if isinstance(ru_results, Exception):
+        ru_results = []
+    if isinstance(en_query, Exception):
+        en_query = topic
+
+    # 5 англоязычных баз с переведённым запросом — параллельно
+    en_results = await asyncio.gather(
+        search_semantic_scholar(en_query, per_source),
+        search_openalex(en_query, per_source),
+        search_crossref(en_query, per_source),
+        search_arxiv(en_query, per_source),
+        search_europepmc(en_query, per_source),
+        return_exceptions=True,
+    )
+
+    results = [ru_results] + list(en_results)
 
     seen: set[str] = set()
     merged: list[LiteratureSource] = []
