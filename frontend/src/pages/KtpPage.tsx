@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Wand2, ArrowRight, CheckCircle2, FileText, BookOpen, GraduationCap, Briefcase, Newspaper, AlertCircle, Lightbulb, TrendingUp } from 'lucide-react';
+import { Upload, Wand2, ArrowRight, CheckCircle2, FileText, BookOpen, GraduationCap, Briefcase, Newspaper, AlertCircle, Lightbulb, TrendingUp, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
 import { parseKtp, parseKtpFile } from '../utils/api';
@@ -33,6 +33,7 @@ export function KtpPage() {
     difficulty, setDifficulty,
     direction, setDirection,
     subjectArea, setSubjectArea,
+    resetKtp,
   } = useAppStore();
 
   const [error, setError] = useState<string | null>(null);
@@ -202,6 +203,11 @@ export function KtpPage() {
         <Card
           title={`Найдено исследовательских направлений: ${ktpTopics.length}`}
           subtitle="Выберите тему, которую будете разрабатывать"
+          action={
+            <Button variant="ghost" size="sm" onClick={resetKtp}>
+              <RotateCcw size={14} /> Сбросить всё
+            </Button>
+          }
         >
           <div className={styles.topicList}>
             {ktpTopics.map((topic, i) => (

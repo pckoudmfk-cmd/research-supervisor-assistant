@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, ArrowRight, Copy, Check, Globe, BookOpen, ExternalLink, AlertCircle } from 'lucide-react';
+import { Wand2, ArrowRight, Copy, Check, Globe, BookOpen, ExternalLink, AlertCircle, RotateCcw } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { searchLiterature } from '../utils/api';
 import { Card } from '../components/ui/Card';
@@ -19,7 +19,7 @@ function formatGost(s: LiteratureSource, index: number): string {
 
 export function LiteraturePage() {
   const navigate = useNavigate();
-  const { topicFormulation, keywords, literature, setLiterature, loadingLiterature, setLoadingLiterature } = useAppStore();
+  const { topicFormulation, keywords, literature, setLiterature, loadingLiterature, setLoadingLiterature, resetLiterature } = useAppStore();
   const [count, setCount] = useState(10);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +97,11 @@ export function LiteraturePage() {
         <Card
           title={`Найдено источников: ${literature.length}`}
           subtitle={`🇷🇺 Русскоязычных: ${ruCount} · 🌍 Англоязычных: ${enCount}`}
+          action={
+            <Button variant="ghost" size="sm" onClick={resetLiterature}>
+              <RotateCcw size={14} /> Сбросить
+            </Button>
+          }
         >
           <div className={styles.toolbar}>
             <Button variant="secondary" size="sm" onClick={handleCopy}>

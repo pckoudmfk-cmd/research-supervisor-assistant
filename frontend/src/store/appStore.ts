@@ -62,6 +62,8 @@ interface AppState {
   setLoadingFormulation: (v: boolean) => void;
   setLoadingPlan: (v: boolean) => void;
   setLoadingLiterature: (v: boolean) => void;
+  resetKtp: () => void;
+  resetLiterature: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -120,6 +122,14 @@ export const useAppStore = create<AppState>()(
       setLoadingFormulation: (loadingFormulation) => set({ loadingFormulation }),
       setLoadingPlan: (loadingPlan) => set({ loadingPlan }),
       setLoadingLiterature: (loadingLiterature) => set({ loadingLiterature }),
+      resetKtp: () => set({
+        ktpText: '', ktpTopics: [], selectedKtpTopic: null,
+        topicFormulation: '', topicObject: '', topicSubject: '',
+        relevance: '', novelty: '', hypothesis: '',
+        goal: '', objectives: [], keywords: [], chapters: [], methods: [], expectedResult: '',
+        literature: [],
+      }),
+      resetLiterature: () => set({ literature: [] }),
     }),
     {
       name: 'rsa-v4',
