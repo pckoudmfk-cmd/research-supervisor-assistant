@@ -408,13 +408,16 @@ export async function generatePlan(
 
 async function translateToEnglish(text: string): Promise<string> {
   try {
-    const result = await ai(
-      `Translate to English for academic database search. Return only the translation, no explanations:\n"${text}"`
+    const r = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=ru|en`
     );
-    return result.trim().replace(/^["']|["']$/g, '');
-  } catch {
-    return text;
-  }
+    if (r.ok) {
+      const data = await r.json();
+      const translated = data?.responseData?.translatedText ?? '';
+      if (translated && translated.toLowerCase() !== text.toLowerCase()) return translated;
+    }
+  } catch { /* ignore */ }
+  return text;
 }
 
 async function fetchOpenAlex(query: string, count: number): Promise<LiteratureSource[]> {
