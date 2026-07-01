@@ -16,7 +16,7 @@ async def ai_proxy(request: AiRequest):
         text = await generate_text(request.prompt)
         return AiResponse(text=text)
     except Exception as e:
-        import os
-        provider = os.getenv("AI_PROVIDER", "gemini")
-        key_set = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GROQ_API_KEY"))
-        raise HTTPException(status_code=500, detail=f"AI error (provider={provider}, key_set={key_set}): {e}")
+        msg = str(e)
+        if "429" in msg or "Too Many Requests" in msg or "rate" in msg.lower():
+            raise HTTPException(status_code=429, detail="AI rate limit — fallback to client")
+        raise HTTPException(status_code=500, detail=msg)

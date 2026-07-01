@@ -83,13 +83,8 @@ async function ai(prompt: string, attempt = 0): Promise<string> {
   if (BACKEND_URL) {
     try {
       return await aiBackend(prompt);
-    } catch (e: any) {
-      const is429 = e?.status === 429 || e?.message === '429';
-      if (is429 && attempt < 4) {
-        await sleep([3000, 6000, 12000, 24000][attempt]);
-        return ai(prompt, attempt + 1);
-      }
-      // Backend вернул 5xx или недоступен — фолбек на Pollinations
+    } catch {
+      // Backend вернул 4xx/5xx или недоступен — фолбек на Pollinations
     }
   }
 

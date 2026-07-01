@@ -32,7 +32,7 @@ PROVIDER_CONFIGS = {
 }
 
 cfg = PROVIDER_CONFIGS.get(PROVIDER, PROVIDER_CONFIGS["groq"])
-client = AsyncOpenAI(base_url=cfg["base_url"], api_key=cfg["api_key"] or "dummy")
+client = AsyncOpenAI(base_url=cfg["base_url"], api_key=cfg["api_key"] or "dummy", max_retries=0)
 
 
 def _extract_json(text: str) -> dict:
