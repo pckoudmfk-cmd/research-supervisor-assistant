@@ -1,22 +1,14 @@
+import asyncio
 import httpx
 from app.models.schemas import LiteratureSource
-from app.services.ai_service import generate_text
 
-
-async def translate_to_english(text: str) -> str:
-    try:
-        result = await generate_text(
-            f"Translate to English for academic search. Return only the translation, no explanations:\n\"{text}\""
-        )
-        return result.strip().strip('"\'')
-    except Exception:
-        return text
+TIMEOUT = 7
 
 
 async def search_cyberleninka(query: str, limit: int = 5) -> list[LiteratureSource]:
     url = "https://cyberleninka.ru/api/search"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.post(url, json={"q": query, "size": limit, "from": 0})
             r.raise_for_status()
             data = r.json()
@@ -48,7 +40,7 @@ async def search_semantic_scholar(query: str, limit: int = 5) -> list[Literature
         "fields": "title,authors,year,venue,externalIds,openAccessPdf",
     }
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.get(url, params=params)
             r.raise_for_status()
             data = r.json()
@@ -80,7 +72,7 @@ async def search_openalex(query: str, limit: int = 5) -> list[LiteratureSource]:
         "mailto": "app@research-assistant.ru",
     }
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.get(url, params=params)
             r.raise_for_status()
             data = r.json()
@@ -113,13 +105,14 @@ async def search_openalex(query: str, limit: int = 5) -> list[LiteratureSource]:
 
 async def search_literature(topic: str, count: int = 10) -> list[LiteratureSource]:
     ru_count = max(count // 2, 3)
-    en_count = max(count // 3, 2)
+    en_count = count - ru_count + 2
 
-    en_query = await translate_to_english(topic)
-
-    ru_results = await search_cyberleninka(topic, ru_count)
-    en_results = await search_semantic_scholar(en_query, en_count)
-    extra_results = await search_openalex(en_query, count - len(ru_results) - len(en_results) + 3)
+    # run all three searches in parallel — stays well within Vercel's 10s limit
+    ru_results, en_results, extra_results = await asyncio.gather(
+        search_cyberleninka(topic, ru_count),
+        search_semantic_scholar(topic, en_count),
+        search_openalex(topic, en_count),
+    )
 
     seen: set[str] = set()
     merged: list[LiteratureSource] = []
