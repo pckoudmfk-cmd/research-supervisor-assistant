@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom';
-import { FileText, Lightbulb, ClipboardList, BookMarked, FileOutput, BookOpenText } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { FileText, Lightbulb, ClipboardList, BookMarked, FileOutput, BookOpenText, RotateCcw } from 'lucide-react';
+import { useAppStore } from '../../store/appStore';
 import styles from './Sidebar.module.css';
 
 const NAV = [
@@ -11,6 +12,16 @@ const NAV = [
 ];
 
 export function Sidebar() {
+  const { resetKtp } = useAppStore();
+  const navigate = useNavigate();
+
+  const handleReset = () => {
+    if (confirm('Сбросить всё и начать заново?')) {
+      resetKtp();
+      navigate('/');
+    }
+  };
+
   return (
     <nav className={styles.sidebar}>
       <div className={styles.label}>Этапы работы</div>
@@ -36,6 +47,11 @@ export function Sidebar() {
         <BookOpenText size={16} />
         <span>Гид по статье</span>
       </NavLink>
+      <div className={styles.divider} />
+      <button className={styles.resetBtn} onClick={handleReset}>
+        <RotateCcw size={14} />
+        <span>Начать заново</span>
+      </button>
     </nav>
   );
 }

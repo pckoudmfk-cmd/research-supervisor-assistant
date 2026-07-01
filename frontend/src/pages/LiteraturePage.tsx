@@ -63,8 +63,8 @@ export function LiteraturePage() {
       <div className={styles.pageHeader}>
         <h1 className={styles.title}>Поиск литературы</h1>
         <p className={styles.desc}>
-          Поиск по КиберЛенинке (русскоязычные статьи), Semantic Scholar и OpenAlex.
-          Более 200 миллионов работ в открытом доступе — без ключей и ограничений.
+          Поиск по 6 базам одновременно: КиберЛенинка, Semantic Scholar, OpenAlex, CrossRef, arXiv, EuropePMC.
+          Более 300 миллионов работ в открытом доступе — без ключей и ограничений.
         </p>
       </div>
 

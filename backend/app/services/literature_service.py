@@ -103,25 +103,160 @@ async def search_openalex(query: str, limit: int = 5) -> list[LiteratureSource]:
     return sources
 
 
-async def search_literature(topic: str, count: int = 10) -> list[LiteratureSource]:
-    ru_count = max(count // 2, 3)
-    en_count = count - ru_count + 2
+async def search_crossref(query: str, limit: int = 5) -> list[LiteratureSource]:
+    url = "https://api.crossref.org/works"
+    params = {
+        "query": query,
+        "rows": limit,
+        "select": "title,author,published,container-title,DOI,language",
+        "mailto": "app@research-assistant.ru",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            r = await client.get(url, params=params)
+            r.raise_for_status()
+            data = r.json()
+    except Exception:
+        return []
 
-    # run all three searches in parallel — stays well within Vercel's 10s limit
-    ru_results, en_results, extra_results = await asyncio.gather(
-        search_cyberleninka(topic, ru_count),
-        search_semantic_scholar(topic, en_count),
-        search_openalex(topic, en_count),
+    sources = []
+    for item in data.get("message", {}).get("items", []):
+        titles = item.get("title") or []
+        title = titles[0] if titles else ""
+        if not title:
+            continue
+        authors = []
+        for a in item.get("author", []):
+            name = " ".join(filter(None, [a.get("given", ""), a.get("family", "")])).strip()
+            if name:
+                authors.append(name)
+        pub = item.get("published", {}).get("date-parts", [[None]])
+        year = pub[0][0] if pub and pub[0] else None
+        journals = item.get("container-title") or []
+        doi = item.get("DOI") or None
+        lang_raw = item.get("language") or "unknown"
+        lang = "ru" if lang_raw in ("ru", "rus") else ("en" if lang_raw in ("en", "eng") else "unknown")
+        sources.append(LiteratureSource(
+            title=title,
+            authors=authors[:3],
+            year=year,
+            source=journals[0] if journals else None,
+            doi=doi,
+            url=f"https://doi.org/{doi}" if doi else None,
+            language=lang,
+        ))
+    return sources
+
+
+async def search_arxiv(query: str, limit: int = 5) -> list[LiteratureSource]:
+    import xml.etree.ElementTree as ET
+    url = "https://export.arxiv.org/api/query"
+    params = {"search_query": f"all:{query}", "max_results": limit, "sortBy": "relevance"}
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            r = await client.get(url, params=params)
+            r.raise_for_status()
+            root = ET.fromstring(r.text)
+    except Exception:
+        return []
+
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+    sources = []
+    for entry in root.findall("a:entry", ns):
+        title_el = entry.find("a:title", ns)
+        title = (title_el.text or "").strip().replace("\n", " ") if title_el is not None else ""
+        if not title:
+            continue
+        authors = [
+            (n.text or "").strip()
+            for n in entry.findall("a:author/a:name", ns)
+            if n.text
+        ]
+        published_el = entry.find("a:published", ns)
+        year = int(published_el.text[:4]) if published_el is not None and published_el.text else None
+        link_el = entry.find("a:id", ns)
+        url_str = (link_el.text or "").strip() if link_el is not None else None
+        doi_el = entry.find("{http://arxiv.org/schemas/atom}doi")
+        doi = (doi_el.text or "").strip() if doi_el is not None else None
+        sources.append(LiteratureSource(
+            title=title,
+            authors=authors[:3],
+            year=year,
+            source="arXiv",
+            doi=doi,
+            url=url_str,
+            language="en",
+        ))
+    return sources
+
+
+async def search_europepmc(query: str, limit: int = 5) -> list[LiteratureSource]:
+    url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+    params = {"query": query, "pageSize": limit, "format": "json", "resultType": "core"}
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            r = await client.get(url, params=params)
+            r.raise_for_status()
+            data = r.json()
+    except Exception:
+        return []
+
+    sources = []
+    for item in data.get("resultList", {}).get("result", []):
+        title = item.get("title", "").strip()
+        if not title:
+            continue
+        authors = [
+            a.get("fullName") or f"{a.get('lastName','')} {a.get('initials','')}".strip()
+            for a in (item.get("authorList", {}).get("author") or [])
+            if a.get("fullName") or a.get("lastName")
+        ]
+        year = item.get("pubYear")
+        try:
+            year = int(year) if year else None
+        except Exception:
+            year = None
+        doi = item.get("doi") or None
+        source_name = item.get("journalTitle") or item.get("bookOrReportDetails", {}).get("publisher")
+        pmid = item.get("pmid") or item.get("id")
+        link = f"https://europepmc.org/article/{item.get('source','MED')}/{pmid}" if pmid else None
+        sources.append(LiteratureSource(
+            title=title,
+            authors=authors[:3],
+            year=year,
+            source=source_name,
+            doi=doi,
+            url=f"https://doi.org/{doi}" if doi else link,
+            language="en",
+        ))
+    return sources
+
+
+async def search_literature(topic: str, count: int = 10) -> list[LiteratureSource]:
+    per_source = max(count // 3, 3)
+
+    # все 6 источников параллельно
+    results = await asyncio.gather(
+        search_cyberleninka(topic, per_source),
+        search_semantic_scholar(topic, per_source),
+        search_openalex(topic, per_source),
+        search_crossref(topic, per_source),
+        search_arxiv(topic, per_source),
+        search_europepmc(topic, per_source),
+        return_exceptions=True,
     )
 
     seen: set[str] = set()
     merged: list[LiteratureSource] = []
-    for s in ru_results + en_results + extra_results:
-        if not s.title:
+    for batch in results:
+        if isinstance(batch, Exception) or not isinstance(batch, list):
             continue
-        key = s.title.lower()[:60]
-        if key not in seen:
-            seen.add(key)
-            merged.append(s)
+        for s in batch:
+            if not s.title:
+                continue
+            key = s.title.lower()[:60]
+            if key not in seen:
+                seen.add(key)
+                merged.append(s)
 
     return merged[:count]
