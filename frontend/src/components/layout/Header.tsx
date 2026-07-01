@@ -46,7 +46,7 @@ export function Header() {
               <input
                 className={styles.keyInput}
                 type="password"
-                placeholder="AIza..."
+                placeholder="gsk_..."
                 value={keyInput}
                 onChange={e => setKeyInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && saveKey()}
@@ -59,7 +59,7 @@ export function Header() {
             <button
               className={`${styles.themeBtn} ${hasKey ? styles.keyActive : ''}`}
               onClick={hasKey ? clearKey : () => setShowKey(true)}
-              title={hasKey ? 'API ключ задан — нажмите чтобы сбросить' : 'Ввести Gemini API ключ'}
+              title={hasKey ? 'Groq API ключ задан — нажмите чтобы сбросить' : 'Ввести Groq API ключ (бесплатно на groq.com)'}
             >
               <KeyRound size={16} />
             </button>

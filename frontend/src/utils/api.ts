@@ -1,10 +1,30 @@
 import type { WorkType, Level, Difficulty, LiteratureSource, Chapter } from '../types';
 
-// ---------- Pollinations.ai — бесплатно, без ключей ----------
+// ---------- AI провайдеры ----------
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-async function ai(prompt: string, attempt = 0): Promise<string> {
+async function aiGroq(prompt: string, apiKey: string): Promise<string> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 2048,
+    }),
+  });
+  if (res.status === 429) throw Object.assign(new Error('429'), { status: 429 });
+  if (!res.ok) throw new Error(`Groq: HTTP ${res.status}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? '';
+}
+
+async function aiPollinations(prompt: string): Promise<string> {
   const res = await fetch('https://text.pollinations.ai/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -15,16 +35,28 @@ async function ai(prompt: string, attempt = 0): Promise<string> {
       private: true,
     }),
   });
-
-  if (res.status === 429) {
-    if (attempt >= 4) throw new Error('Сервис AI перегружен — попробуйте через минуту');
-    const delay = [3000, 6000, 12000, 24000][attempt];
-    await sleep(delay);
-    return ai(prompt, attempt + 1);
-  }
-
-  if (!res.ok) throw new Error(`Ошибка сервиса AI: HTTP ${res.status}`);
+  if (res.status === 429) throw Object.assign(new Error('429'), { status: 429 });
+  if (!res.ok) throw new Error(`Pollinations: HTTP ${res.status}`);
   return res.text();
+}
+
+async function ai(prompt: string, attempt = 0): Promise<string> {
+  const groqKey = localStorage.getItem('groq-api-key');
+  try {
+    if (groqKey) return await aiGroq(prompt, groqKey);
+    return await aiPollinations(prompt);
+  } catch (e: any) {
+    const is429 = e?.status === 429 || e?.message === '429';
+    const isNetwork = e instanceof TypeError; // "Failed to fetch"
+    if ((is429 || isNetwork) && attempt < 4) {
+      const delay = [3000, 6000, 12000, 24000][attempt];
+      await sleep(delay);
+      return ai(prompt, attempt + 1);
+    }
+    if (is429) throw new Error('Сервис AI перегружен — попробуйте через минуту');
+    if (isNetwork) throw new Error('Нет соединения с AI сервисом — проверьте интернет и попробуйте снова');
+    throw e;
+  }
 }
 
 function repairJson(raw: string): string {
