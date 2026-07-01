@@ -37,6 +37,21 @@ async function aiPollinations(prompt: string): Promise<string> {
   return res.text();
 }
 
+const BACKEND_URL = import.meta.env.VITE_API_URL as string | undefined;
+
+async function aiBackend(prompt: string): Promise<string> {
+  if (!BACKEND_URL) throw new Error('no backend');
+  const res = await fetch(`${BACKEND_URL}/api/ai`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  if (res.status === 429) throw Object.assign(new Error('429'), { status: 429 });
+  if (!res.ok) throw new Error(`Backend: HTTP ${res.status}`);
+  const data = await res.json();
+  return data.text ?? '';
+}
+
 function getApiConfig(): { baseUrl: string; key: string; model: string } | null {
   const groqKey = localStorage.getItem('groq-api-key');
   if (groqKey) return { baseUrl: 'https://api.groq.com/openai/v1', key: groqKey, model: 'llama-3.3-70b-versatile' };
@@ -48,11 +63,18 @@ function getApiConfig(): { baseUrl: string; key: string; model: string } | null 
 async function ai(prompt: string, attempt = 0): Promise<string> {
   const cfg = getApiConfig();
   try {
-    if (cfg) return await aiOpenAICompat(prompt, cfg.baseUrl, cfg.key, cfg.model);
-    return await aiPollinations(prompt);
+    // 1. Бэкенд (Gemini, ключ на Vercel) — приоритет если нет пользовательского ключа
+    if (!cfg) return await aiBackend(prompt);
+    // 2. Пользовательский ключ (Groq / OpenRouter)
+    return await aiOpenAICompat(prompt, cfg.baseUrl, cfg.key, cfg.model);
   } catch (e: any) {
     const is429 = e?.status === 429 || e?.message === '429';
     const isNetwork = e instanceof TypeError;
+    const isNoBackend = e?.message === 'no backend';
+    // Если бэкенд недоступен — падаем на Pollinations
+    if (isNoBackend || (isNetwork && !cfg)) {
+      try { return await aiPollinations(prompt); } catch { /* ignore */ }
+    }
     if ((is429 || isNetwork) && attempt < 4) {
       const delay = [3000, 6000, 12000, 24000][attempt];
       await sleep(delay);

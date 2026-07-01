@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.routers import ktp, formulation, research_plan, literature
+from app.routers import ktp, formulation, research_plan, literature, ai_proxy
 
 load_dotenv()
 
@@ -23,6 +23,7 @@ app.include_router(ktp.router, prefix="/api/ktp", tags=["ktp"])
 app.include_router(formulation.router, prefix="/api/formulation", tags=["formulation"])
 app.include_router(research_plan.router, prefix="/api/plan", tags=["plan"])
 app.include_router(literature.router, prefix="/api/literature", tags=["literature"])
+app.include_router(ai_proxy.router, prefix="/api/ai", tags=["ai"])
 
 
 @app.get("/api/health")
