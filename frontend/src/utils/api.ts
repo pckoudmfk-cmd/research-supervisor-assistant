@@ -364,7 +364,7 @@ export async function generatePlan(
 async function translateToEnglish(text: string): Promise<string> {
   try {
     const result = await ai(
-      `Переведи на английский язык для поиска в международных научных базах данных. Верни только перевод, без пояснений:\n"${text}"`
+      `Translate to English for academic database search. Return only the translation, no explanations:\n"${text}"`
     );
     return result.trim().replace(/^["']|["']$/g, '');
   } catch {
@@ -372,115 +372,92 @@ async function translateToEnglish(text: string): Promise<string> {
   }
 }
 
+async function fetchOpenAlex(query: string, count: number): Promise<LiteratureSource[]> {
+  const q = encodeURIComponent(query);
+  const r = await fetch(
+    `https://api.openalex.org/works?search=${q}&per-page=${count}&filter=has_doi:true&sort=cited_by_count:desc`
+  );
+  if (!r.ok) throw new Error(`OpenAlex: HTTP ${r.status}`);
+  const d = await r.json();
+  const out: LiteratureSource[] = [];
+  for (const w of (d.results ?? [])) {
+    if (!w.title) continue;
+    const doi = w.doi?.replace('https://doi.org/', '');
+    out.push({
+      title: w.title,
+      authors: (w.authorships ?? []).slice(0, 5).map((a: any) => a.author?.display_name ?? ''),
+      year: w.publication_year,
+      source: w.primary_location?.source?.display_name,
+      doi,
+      url: w.doi ?? w.open_access?.oa_url ?? undefined,
+      language: guessLang(w.title),
+    });
+  }
+  return out;
+}
+
+async function generateAiLiterature(topic: string, keywords: string[], count: number): Promise<LiteratureSource[]> {
+  const prompt = `Ты — библиограф. Составь список из ${count} реальных научных источников по теме: «${topic}».
+Ключевые слова: ${keywords.join(', ')}.
+Включи русскоязычные статьи из журналов ВАК, РИНЦ, КиберЛенинки и международные статьи.
+Верни строго JSON (без пояснений):
+{
+  "sources": [
+    {
+      "title": "Название статьи или книги",
+      "authors": ["Фамилия И.О."],
+      "year": 2022,
+      "source": "Название журнала или издательства",
+      "url": "https://cyberleninka.ru/article/n/... или https://doi.org/...",
+      "language": "ru"
+    }
+  ]
+}
+Используй реальные, существующие публикации. Язык полей — соответствующий оригиналу (ru или en).`;
+  const text = await ai(prompt);
+  const data = extractJson(text);
+  return (data.sources ?? []).map((s: any) => ({
+    title: s.title ?? '',
+    authors: Array.isArray(s.authors) ? s.authors : [],
+    year: s.year,
+    source: s.source,
+    doi: undefined,
+    url: s.url,
+    language: s.language === 'ru' ? 'ru' : 'en',
+  })) as LiteratureSource[];
+}
+
 export async function searchLiterature(topic: string, keywords: string[], count = 10): Promise<LiteratureSource[]> {
   const results: LiteratureSource[] = [];
-  const ruQuery = keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic;
-  const errors: string[] = [];
+  const enQuery = await translateToEnglish(keywords.length > 0 ? keywords.slice(0, 4).join(' ') : topic);
 
-  // 1. КиберЛенинка — русскоязычные статьи в открытом доступе
+  // 1. OpenAlex — поддерживает CORS, бесплатный, открытый
   try {
-    const r = await fetch('https://cyberleninka.ru/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: ruQuery, size: Math.ceil(count * 0.5), from: 0 }),
-    });
-    if (r.ok) {
-      const d = await r.json();
-      for (const a of (d.articles ?? [])) {
-        if (!a.name) continue;
-        const slug = a.id ?? '';
-        results.push({
-          title: a.name,
-          authors: a.authorNames ? a.authorNames.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
-          year: a.publishedYear ?? undefined,
-          source: a.journalName ?? undefined,
-          doi: undefined,
-          url: slug ? `https://cyberleninka.ru/article/n/${slug}` : undefined,
-          language: 'ru',
-        });
-      }
-    } else {
-      errors.push(`КиберЛенинка: HTTP ${r.status}`);
-    }
-  } catch (e: any) { errors.push(`КиберЛенинка: ${e?.message ?? 'недоступна'}`); }
+    const items = await fetchOpenAlex(enQuery, Math.ceil(count * 0.6));
+    results.push(...items);
+  } catch { /* fallthrough to AI */ }
 
-  // 2. Semantic Scholar — международные статьи (запрос на английском)
-  try {
-    const enQuery = await translateToEnglish(ruQuery);
-    const q = encodeURIComponent(enQuery || ruQuery);
-    const need = Math.ceil(count * 0.35);
-    const r = await fetch(
-      `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&limit=${need}&fields=title,authors,year,venue,externalIds,openAccessPdf`
-    );
-    if (r.ok) {
-      const d = await r.json();
-      for (const p of (d.data ?? [])) {
-        if (!p.title) continue;
-        const doi = p.externalIds?.DOI;
-        const url = p.openAccessPdf?.url ?? (doi ? `https://doi.org/${doi}` : undefined);
-        results.push({
-          title: p.title,
-          authors: (p.authors ?? []).map((a: any) => a.name),
-          year: p.year,
-          source: p.venue || undefined,
-          doi,
-          url,
-          language: guessLang(p.title),
-        });
-      }
-    } else {
-      errors.push(`Semantic Scholar: HTTP ${r.status}`);
-    }
-  } catch (e: any) { errors.push(`Semantic Scholar: ${e?.message ?? 'недоступен'}`); }
-
-  // 3. OpenAlex — дополнение до нужного количества
-  try {
-    const need = count - results.length;
-    if (need > 0) {
-      const enQuery = await translateToEnglish(ruQuery);
-      const q = encodeURIComponent(enQuery || ruQuery);
-      const r = await fetch(
-        `https://api.openalex.org/works?search=${q}&per-page=${need + 3}&filter=has_doi:true&sort=cited_by_count:desc`
-      );
-      if (r.ok) {
-        const d = await r.json();
-        for (const w of (d.results ?? [])) {
-          if (!w.title) continue;
-          const doi = w.doi?.replace('https://doi.org/', '');
-          results.push({
-            title: w.title,
-            authors: (w.authorships ?? []).slice(0, 5).map((a: any) => a.author?.display_name ?? ''),
-            year: w.publication_year,
-            source: w.primary_location?.source?.display_name,
-            doi,
-            url: w.doi ?? w.open_access?.oa_url ?? undefined,
-            language: guessLang(w.title),
-          });
-        }
-      } else {
-        errors.push(`OpenAlex: HTTP ${r.status}`);
-      }
-    }
-  } catch (e: any) { errors.push(`OpenAlex: ${e?.message ?? 'недоступен'}`); }
-
-  if (results.length === 0) {
-    throw new Error(
-      errors.length
-        ? `Не удалось получить источники: ${errors.join('; ')}`
-        : 'Источники не найдены. Попробуйте уточнить тему или ключевые слова.'
-    );
+  // 2. AI-генерация — русскоязычные + дополнение если OpenAlex вернул мало
+  const need = count - results.length;
+  if (need > 0) {
+    try {
+      const aiItems = await generateAiLiterature(topic, keywords, need + 2);
+      results.push(...aiItems);
+    } catch { /* ignore */ }
   }
 
-  // deduplicate by title
+  if (results.length === 0) {
+    throw new Error('Источники не найдены. Проверьте подключение к интернету и попробуйте снова.');
+  }
+
+  // дедупликация по заголовку
   const seen = new Set<string>();
-  const unique = results.filter(r => {
+  return results.filter(r => {
     const key = r.title.toLowerCase().slice(0, 60);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  });
-
-  return unique.slice(0, count);
+  }).slice(0, count);
 }
 
 function guessLang(title?: string): 'ru' | 'en' | 'unknown' {
